@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Lexemo</title>
+    <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="customAlertModal" class="modal">
+      <div class="modal-content">
+        <h1 class="modal-title secondary" data-i18n="WARNING"></h1>
+        <p id="customAlertMessage" data-i18n="THIS_IS_A_WARNING_MESSAGE"></p>
+        <div class="modal-actions justify-end">
+          <button
+            id="customAlertCloseBtn"
+            class="btn btn-primary"
+            data-i18n="OK"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <div id="customConfirmModal" class="modal">
+      <div class="modal-content">
+        <h1 class="modal-title secondary" data-i18n="CONFIRMATION"></h1>
+        <p id="customConfirmMessage" data-i18n="ARE_YOU_SURE"></p>
+        <div class="modal-actions justify-end">
+          <button
+            id="customConfirmCancelBtn"
+            class="btn btn-outline-danger"
+            data-i18n="CANCEL"
+          ></button>
+          <button
+            id="customConfirmOkBtn"
+            class="btn btn-primary"
+            data-i18n="OK"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <div id="editCardModal" class="modal">
+      <div class="modal-content">
+        <h1 class="modal-title secondary" data-i18n="EDIT_CARD"></h1>
+        <label
+          for="editCardQuestionInput"
+          class="modal-label"
+          data-i18n="QUESTION"
+        ></label>
+        <input type="text" id="editCardQuestionInput" class="modal-input" />
+
+        <label
+          for="editCardAnswerInput"
+          class="modal-label"
+          data-i18n="ANSWER"
+        ></label>
+        <input type="text" id="editCardAnswerInput" class="modal-input" />
+
+        <label
+          for="editCardHintInput"
+          class="modal-label"
+          data-i18n="HINT_CONTEXT"
+        ></label>
+        <input type="text" id="editCardHintInput" class="modal-input mb-20" />
+
+        <div class="modal-actions justify-end">
+          <button
+            id="editCardCancelBtn"
+            class="btn btn-outline-danger"
+            data-i18n="CANCEL"
+          ></button>
+          <button
+            id="editCardSaveBtn"
+            class="btn btn-primary"
+            data-i18n="SAVE"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <div id="deckModal" class="modal">
+      <div class="modal-content">
+        <h1 data-i18n="SELECT_A_DECK"></h1>
+        <div id="deckList">
+          <div id="addDeckBtn" class="deck-card">
+            <div class="plus-sign">+</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="congratsModal" class="modal">
+      <div class="modal-content">
+        <h1 data-i18n="CONGRATULATIONS"></h1>
+        <p id="congratsMessage" data-i18n="YOU_FINISHED_THE_GAME"></p>
+        <div class="modal-actions justify-center">
+          <button
+            id="restartBtn"
+            class="btn btn-primary"
+            data-i18n="RESTART"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <div id="statsModal" class="modal">
+      <div class="modal-content">
+        <h1 id="statsDeckName" data-i18n="STATISTICS"></h1>
+        <ul id="statsList">
+          <li>
+            <span data-i18n="TOTAL_CARDS"></span> <span id="statsTotal">0</span>
+          </li>
+          <li><span data-i18n="REVIEW"></span> <span id="statsDue">0</span></li>
+          <li>
+            <span data-i18n="LEARNING"></span> <span id="statsLearning">0</span>
+          </li>
+          <li><span data-i18n="NEW"></span> <span id="statsNew">0</span></li>
+          <li>
+            <span data-i18n="MATURE"></span> <span id="statsMature">0</span>
+          </li>
+        </ul>
+        <div class="modal-actions justify-end">
+          <button
+            id="statsResetFsrsBtn"
+            class="btn btn-danger"
+            data-i18n="RESET_FSRS"
+          ></button>
+          <button
+            id="statsCloseBtn"
+            class="btn btn-primary"
+            data-i18n="CLOSE"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <div id="generalSettingsModal" class="modal">
+      <div class="modal-content">
+        <h1 data-i18n="GENERAL_OPTIONS"></h1>
+
+        <label>
+          <span data-i18n="CORRECT_SOUND"></span>:
+          <input type="checkbox" id="generalCorrectSoundToggle" checked />
+        </label>
+        <label>
+          <span data-i18n="WRONG_SOUND"></span>:
+          <input type="checkbox" id="generalWrongSoundToggle" checked />
+        </label>
+        <label>
+          <span data-i18n="DARK_MODE"></span>:
+          <input type="checkbox" id="generalDarkModeToggle" />
+        </label>
+
+        <label for="languageSelector" style="margin-top: 30px;">
+          <span data-i18n="LANGUAGE_SELECTOR_LABEL"></span>:
+        </label>
+        <select id="languageSelector">
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="pt-BR">Português</option>
+        </select>
+
+        <div class="modal-actions justify-end mt-25">
+          <button
+            id="generalSettingsCancelBtn"
+            class="btn btn-outline-danger"
+            data-i18n="CANCEL"
+          ></button>
+          <button
+            id="generalSettingsSaveBtn"
+            class="btn btn-primary"
+            data-i18n="SAVE"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <div id="settingsModal" class="modal">
+      <div class="modal-content">
+        <h1 data-i18n="DECK_SETTINGS"></h1>
+        <label for="deckNameInput"><span data-i18n="DECK_NAME"></span>:</label>
+        <input
+          type="text"
+          id="deckNameInput"
+          placeholder="Ex: Vocabulário Português"
+          data-i18n-placeholder="EXAMPLE_PORTUGUESE_VOCABULARY"
+        />
+
+        <label class="form-group">
+          <span data-i18n="READING_VOICE"></span>:
+          <select id="voiceSelect"></select>
+        </label>
+
+        <div class="form-group">
+          <label>
+            <span data-i18n="DECK_CONTENT"></span>:
+          </label>
+          <button
+            id="editJsonBtn"
+            class="btn"
+            data-i18n="EDIT_IMPORT_JSON"
+          ></button>
+        </div>
+
+        <hr />
+
+        <fieldset id="gameModeSettings">
+          <legend data-i18n="GAME_MODE"></legend>
+          <div>
+            <label>
+              <span data-i18n="FREE"></span>
+              <input
+                type="checkbox"
+                id="modeFreeToggle"
+                name="gameMode"
+                value="free"
+              />
+            </label>
+            <label>
+              <span data-i18n="FSRS"></span>
+              <input
+                type="checkbox"
+                id="modeFsrsToggle"
+                name="gameMode"
+                value="fsrs"
+              />
+            </label>
+            <label>
+              <span data-i18n="PRONUNCIATION"></span>
+              <input
+                type="checkbox"
+                id="modePronunciationToggle"
+                name="gameMode"
+                value="pronunciation"
+              />
+            </label>
+            <label>
+              <span data-i18n="SPEED_MODE">Speed Mode</span>
+              <input
+                type="checkbox"
+                id="modeTimerToggle"
+                name="gameMode"
+                value="timer"
+              />
+            </label>
+          </div>
+        </fieldset>
+
+        <label id="gameSpeedGroup" style="display: none;">
+          <span data-i18n="GAME_SPEED"></span>:
+          <span class="input-number-control">
+            <button class="btn-step" id="gameSpeedDecrement">-</button>
+            <input type="number" id="gameSpeedInput" min="1" max="10" value="1">
+            <button class="btn-step" id="gameSpeedIncrement">+</button>
+          </span>
+        </label>
+
+        <div id="freeModeSettingsDiv">
+          <label>
+            <span data-i18n="LETTER_HINT"></span>:
+            <span class="input-number-control">
+              <button
+                type="button"
+                class="btn-step"
+                id="answerTipDecrement"
+                aria-label="Diminuir"
+                tabindex="-1"
+                data-i18n-aria-label="DECREASE"
+              >-</button>
+              <input
+                type="number"
+                id="answerTipInput"
+                min="0"
+                max="3"
+                value="1"
+                step="1"
+              />
+              <button
+                type="button"
+                class="btn-step"
+                id="answerTipIncrement"
+                aria-label="Aumentar"
+                tabindex="-1"
+                data-i18n-aria-label="INCREASE"
+              >+</button>
+            </span>
+          </label>
+          <label>
+            <span data-i18n="COLOR_HINT"></span>:
+            <input type="checkbox" id="colorHintToggle" checked />
+          </label>
+          <label>
+            <span data-i18n="POSITION_HINT"></span>:
+            <input type="checkbox" id="positionHintToggle" checked />
+          </label>
+          <label>
+            <span data-i18n="RANDOM_ORDER"></span>:
+            <input type="checkbox" id="randomToggle" />
+          </label>
+          <label>
+            <span data-i18n="RESTART_ON_WRONG"></span>:
+            <input type="checkbox" id="restartOnWrongToggle" />
+          </label>
+        </div>
+
+        <div
+          id="settingsModalActions"
+          class="modal-actions justify-end"
+        >
+          <button
+            id="settingsCancelBtn"
+            class="btn btn-outline-danger"
+            data-i18n="CANCEL"
+          ></button>
+          <button
+            id="settingsSaveBtn"
+            class="btn btn-primary"
+            data-i18n="SAVE"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <div id="jsonEditorModal" class="modal">
+      <div class="modal-content">
+        <h1 data-i18n="EDIT_JSON_CONTENT"></h1>
+        <textarea id="jsonEditorTextarea"></textarea>
+        <div class="modal-actions justify-between">
+          <div class="modal-actions-sub">
+            <button
+              id="importJsonBtn"
+              class="btn btn-outline"
+              data-i18n="IMPORT_FILE"
+            ></button>
+            <button
+              id="exportJsonBtn"
+              class="btn btn-outline"
+              data-i18n="EXPORT_FILE"
+            ></button>
+          </div>
+          <div class="modal-actions-sub">
+            <button
+              id="cancelJsonBtn"
+              class="btn btn-outline-danger"
+              data-i18n="CANCEL"
+            ></button>
+            <button
+              id="saveJsonBtn"
+              class="btn btn-primary"
+              data-i18n="SAVE"
+            ></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="mergeModal" class="modal">
+      <div class="modal-content">
+        <h2 data-i18n="IMPORT_JSON"></h2>
+        <p data-i18n="MERGE_PROMPT"></p>
+        <div class="modal-actions justify-between mt-20">
+          <button
+            id="cancelMergeBtn"
+            class="btn btn-outline-danger"
+            data-i18n="CANCEL"
+          ></button>
+          <div class="modal-actions-sub">
+            <button
+              id="overwriteBtn"
+              class="btn btn-warning"
+              data-i18n="OVERWRITE"
+            ></button>
+            <button
+              id="mergeBtn"
+              class="btn btn-primary"
+              data-i18n="MERGE"
+            ></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="scorePanel">
+      <button
+        id="generalSettingsBtn"
+        class="panel-btn"
+        data-i18n-title="GENERAL_APP_OPTIONS"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <use href="assets/icons.svg#icon-tune"></use>
+        </svg>
+      </button>
+
+      <button
+        id="deckSelectBtn"
+        class="panel-btn"
+        data-i18n-title="BACK_TO_DECK_SELECTION"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <use href="assets/icons.svg#icon-dashboard"></use>
+        </svg>
+      </button>
+
+      <button
+        id="settingsBtn"
+        class="panel-btn"
+        data-i18n-title="CURRENT_DECK_SETTINGS"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <use href="assets/icons.svg#icon-settings"></use>
+        </svg>
+      </button>
+
+      <span id="currentDeckName" data-i18n="NO_DECK"></span>
+      <span class="shortcut-separator">|</span>
+      <span id="scoreText"></span>
+
+    </div>
+
+    <div id="game-area">
+      <div id="context-hint-box" class="context-hint-box" style="display: none;">
+        <span class="context-icon">💡</span>
+        <span id="context-hint-text"></span>
+      </div>
+      
+    </div>
+
+    <div id="timer-mode-container" style="display: none;"></div>
+
+
+    <div id="shortcutsPanel">
+      <span class="shortcut-item">
+        <span class="shortcut-label" data-i18n="DELETE_CARD">Delete Card</span>:
+        <span class="shortcut-inst"><kbd>F1</kbd></span>
+      </span>
+      <span class="shortcut-separator">|</span>
+      <span class="shortcut-item">
+        <span class="shortcut-label" data-i18n="EDIT_CARD">Edit Card</span>:
+        <span class="shortcut-inst"><kbd>Alt</kbd></span>
+      </span>
+      <span id="levelRangeSeparator" class="shortcut-separator">|</span>
+      <span id="levelRangeShortcut" class="shortcut-item">
+        <span class="shortcut-label" data-i18n="LEVEL_RANGE">Level Range</span>:
+        <span class="shortcut-inst" data-i18n="LEVEL_RANGE_INSTRUCTION">Hold <kbd>↑</kbd> & type level range (e.g. 5 or 1-5)</span>
+      </span>
+    </div>
+
+    <div id="contextHintBox">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <use href="assets/icons.svg#icon-info"></use>
+      </svg>
+      <span id="contextHintText" data-i18n="EXAMPLE_CONTEXT_SENTENCE"></span>
+    </div>
+
+    <input type="file" id="fileInput" accept=".json" class="hidden" />
+
+    <script type="module" src="js/i18n/i18n.js"></script>
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
