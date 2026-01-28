@@ -178,24 +178,98 @@ function _updateRecognitionLanguage() {
   initSpeechRecognition();
 }
 
-function _speakCurrentSyllable() {
-  const canSpeak =
-    state.currentSyllable?.question &&
-    !state.pronunciationModeEnabled &&
-    state.utterance;
-
-  if (canSpeak) {
-    state.utterance.text = state.currentSyllable.question;
-    if (speechSynthesis.speaking) {
-      speechSynthesis.cancel();
-    }
-    speechSynthesis.speak(state.utterance);
+export function speakCurrentSyllable(force = false) {
+  if (state.speechTimeout) {
+    clearTimeout(state.speechTimeout);
+    state.speechTimeout = null;
   }
+
+  const canSpeak =
+    state.isSpeechUnlocked &&
+    state.currentSyllable?.question &&
+    (force || !state.pronunciationModeEnabled) &&
+    state.selectedVoice;
+
+  if (!canSpeak) return;
+
+  // Chrome workaround: resume paused synthesis
+  speechSynthesis.resume();
+
+  // Cancel any ongoing speech
+  if (speechSynthesis.speaking || speechSynthesis.pending) {
+    speechSynthesis.cancel();
+  }
+
+  // Small delay to let cancel complete (Chrome bug workaround)
+  state.speechTimeout = setTimeout(() => {
+    state.speechTimeout = null;
+    
+    // Final check before speaking
+    if (!state.currentSyllable || !state.isSpeechUnlocked) return;
+    if (!force && state.pronunciationModeEnabled) return;
+
+    const utterance = new SpeechSynthesisUtterance(state.currentSyllable.question);
+    utterance.voice = state.selectedVoice;
+    
+    speechSynthesis.speak(utterance);
+    state.hasSpokenCurrentCard = true;
+  }, 250);
 }
 
 export function selectVoice() {
   _setVoiceFromSelection();
   _updateRecognitionLanguage();
-  _speakCurrentSyllable();
+  speakCurrentSyllable();
   startRecognition();
+}
+
+function _unlockSpeechSynthesis(e) {
+  // If it's a click, it MUST be in the game area
+  if (e.type === "click") {
+    const isGameArea =
+      e.target.closest("#game-area") ||
+      e.target.closest(".syllable") ||
+      e.target.closest(".flying-word");
+    if (!isGameArea) return;
+  }
+  // If it's a keydown, no modal should be open
+  else if (e.type === "keydown") {
+    if (isModalOpen()) return;
+  }
+
+  // Remove listeners now that we're either keydown or a valid game area interaction
+  document.removeEventListener("keydown", _unlockSpeechSynthesis, {
+    capture: true,
+  });
+  document.removeEventListener("click", _unlockSpeechSynthesis, {
+    capture: true,
+  });
+
+  state.isSpeechUnlocked = true;
+
+  // Directly speak the current word now that user has interacted
+  // Only play if it's a click (keydown will be handled by normal game logic)
+  if (e.type === "click" && !state.hasSpokenCurrentCard) {
+    speakCurrentSyllable();
+  }
+}
+
+export function initSpeechUnlock() {
+  document.addEventListener("keydown", _unlockSpeechSynthesis, {
+    capture: true,
+  });
+  document.addEventListener("click", _unlockSpeechSynthesis, { capture: true });
+}
+
+export function resetSpeechUnlock() {
+  state.isSpeechUnlocked = false;
+  // Remove existing listeners just in case
+  document.removeEventListener("keydown", _unlockSpeechSynthesis, {
+    capture: true,
+  });
+  document.removeEventListener("click", _unlockSpeechSynthesis, {
+    capture: true,
+  });
+  // Re-attach
+  initSpeechUnlock();
 }

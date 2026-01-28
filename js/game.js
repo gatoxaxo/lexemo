@@ -1,6 +1,6 @@
 import { state, GROUP_SIZE, correctSound, wrongSound } from "./state.js";
 import * as utils from "./utils.js";
-import * as fsrs from "./fsrs.js";
+import * as srs from "./srs.js";
 import * as speech from "./speech.js";
 import { timerMode } from "./timerMode.js";
 import {
@@ -11,6 +11,7 @@ import {
   showCustomAlert,
   showCustomConfirm,
   openEditCardModal,
+  saveGlobalSettings,
 } from "./ui.js";
 import { getTranslation } from "./i18n/i18n.js";
 
@@ -56,12 +57,16 @@ function pickRandomSyllable() {
 function _setupSyllable() {
   state.userTyped = "";
   state.hintUsed = false;
+  state.hasSpokenCurrentCard = false;
+  state.lastKeyTime = 0;
+  state.backspaceCount = 0;
+  state.maxPause = 0;
   if (state.currentSyllableElement) state.currentSyllableElement.remove();
 }
 
 function _pickNextCard() {
   if (state.evaluativeModeEnabled) {
-    state.currentSyllable = fsrs.pickFsrsCard();
+    state.currentSyllable = srs.pickSrsCard();
     if (!state.currentSyllable) {
       showCongrats(true, startGame);
       return false;
@@ -84,18 +89,12 @@ function _showContextHint() {
   }
 }
 
-function _speakSyllable() {
-  if (state.selectedVoice && state.utterance) {
-    state.utterance.text = state.currentSyllable.question;
-    if (speechSynthesis.speaking) speechSynthesis.cancel();
-    speechSynthesis.speak(state.utterance);
-  }
-}
+
 
 function _createSyllableElement() {
   const syllableEl = document.createElement("div");
   syllableEl.classList.add("syllable");
-  syllableEl.style.position = "relative";
+  syllableEl.style.position = "absolute";
   return syllableEl;
 }
 
@@ -106,12 +105,12 @@ function _createTranslationElement() {
   return translationEl;
 }
 
-function _applyFsrsStyles(syllableEl, translationEl) {
+function _applySrsStyles(syllableEl, translationEl) {
   syllableEl.style.color = "inherit";
-  syllableEl.style.textShadow = "0 0 5px rgba(255, 255, 255, 0.5)";
+  syllableEl.style.textShadow = "0 0 2px currentColor";
   syllableEl.textContent = state.currentSyllable.question;
   translationEl.style.color = "inherit";
-  translationEl.style.textShadow = "0 0 5px rgba(255, 255, 255, 0.5)";
+  translationEl.style.textShadow = "0 0 2px currentColor";
   syllableEl.style.left = "50%";
   syllableEl.style.top = "50%";
   syllableEl.style.transform = "translate(-50%, -50%)";
@@ -138,14 +137,19 @@ function _applyFreeModeStyles(syllableEl, translationEl) {
       ? color
       : "inherit";
   syllableEl.style.color = hintColor;
-  syllableEl.style.textShadow = "0 0 5px rgba(255, 255, 255, 0.5)";
+  syllableEl.style.textShadow = "0 0 2px currentColor";
   translationEl.style.color = hintColor;
-  translationEl.style.textShadow = "0 0 5px rgba(255, 255, 255, 0.5)";
+  translationEl.style.textShadow = "0 0 2px currentColor";
 
   _setSyllableText(syllableEl);
 
   if (state.positionHintEnabled && !state.pronunciationModeEnabled) {
-    const { x, y } = utils.generatePosition(syllableEl.textContent);
+    const fullText =
+      state.currentSyllable.question + " → " + state.currentSyllable.answer;
+    const { x, y } = utils.generatePosition(
+      fullText,
+      state.currentSyllable.question,
+    );
     syllableEl.style.left = x + "px";
     syllableEl.style.top = y + "px";
   } else {
@@ -159,7 +163,7 @@ function _appendSyllableToDom(syllableEl, translationEl) {
   syllableEl.appendChild(translationEl);
   state.currentSyllableElement = syllableEl;
   state.translationElement = translationEl;
-  document.body.appendChild(syllableEl);
+  dom.gameArea.appendChild(syllableEl);
 }
 
 export function displaySyllable() {
@@ -172,7 +176,7 @@ export function displaySyllable() {
   const translationEl = _createTranslationElement();
 
   if (state.evaluativeModeEnabled) {
-    _applyFsrsStyles(syllableEl, translationEl);
+    _applySrsStyles(syllableEl, translationEl);
   } else {
     _applyFreeModeStyles(syllableEl, translationEl);
   }
@@ -186,7 +190,9 @@ export function displaySyllable() {
     }
     setTimeout(speech.startRecognition, 200);
   } else {
-    _speakSyllable();
+    if (state.autoplayEnabled) {
+      speech.speakCurrentSyllable();
+    }
   }
 }
 
@@ -196,6 +202,7 @@ function _resetGameState() {
   state.currentSyllable = null;
   state.currentGroupIndex = 0;
   state.currentGroup = [];
+  srs.resetSessionStats();
 }
 
 function _cleanupGameUI() {
@@ -208,9 +215,15 @@ function _initializeDeckMode() {
   if (state.evaluativeModeEnabled) {
     state.cardStartTime = Date.now();
   } else {
-     
+    // Apply level scope if set
     if (state.originalSyllableList) {
-      state.syllableList = [...state.originalSyllableList];
+      if (state.levelScopeStart && state.levelScopeEnd) {
+        const startIndex = (state.levelScopeStart - 1) * GROUP_SIZE;
+        const endIndex = state.levelScopeEnd * GROUP_SIZE;
+        state.syllableList = state.originalSyllableList.slice(startIndex, endIndex);
+      } else {
+        state.syllableList = [...state.originalSyllableList];
+      }
     }
     
     if (state.randomToggleEnabled) {
@@ -220,43 +233,57 @@ function _initializeDeckMode() {
   }
 }
 
+/**
+ * Stop all active game processes and clear state.
+ */
+export function stopGame() {
+  if (state.speechTimeout) {
+    clearTimeout(state.speechTimeout);
+    state.speechTimeout = null;
+  }
+  timerMode.stop();
+  speech.stopRecognition();
+  if (speechSynthesis.speaking || speechSynthesis.pending) {
+    speechSynthesis.cancel();
+  }
+  _cleanupGameUI();
+  _resetGameState();
+}
+
 export function startGame() {
+  // Always stop any current game first
+  stopGame();
+
   if (!state.syllableList || state.syllableList.length === 0) {
     if (state.isLevelSkipActive) {
       showCustomAlert(getTranslation("NO_CARDS_FOR_LEVEL_SCOPE"));
       state.isLevelSkipActive = false;
-      return;
     }
     return;
   }
 
   if (state.timerModeEnabled) {
-       
-       
-      if (state.originalSyllableList) {
-        if (state.levelScopeStart && state.levelScopeEnd) {
-            const startIndex = (state.levelScopeStart - 1) * GROUP_SIZE;
-            const endIndex = state.levelScopeEnd * GROUP_SIZE;
-            state.syllableList = state.originalSyllableList.slice(startIndex, endIndex);
-        } else {
-            state.syllableList = [...state.originalSyllableList];
-        }
+    if (state.originalSyllableList) {
+      if (state.levelScopeStart && state.levelScopeEnd) {
+        const startIndex = (state.levelScopeStart - 1) * GROUP_SIZE;
+        const endIndex = state.levelScopeEnd * GROUP_SIZE;
+        state.syllableList = state.originalSyllableList.slice(
+          startIndex,
+          endIndex,
+        );
+      } else {
+        state.syllableList = [...state.originalSyllableList];
       }
-       
-      if (state.randomToggleEnabled) {
-        state.syllableList = utils.shuffle([...state.syllableList]);
-      }
-      
-      timerMode.stop();  
-      timerMode.start(startGame);
-      return;
-  } else {
-      timerMode.stop();
+    }
+
+    if (state.randomToggleEnabled) {
+      state.syllableList = utils.shuffle([...state.syllableList]);
+    }
+
+    timerMode.start(startGame);
+    return;
   }
 
-  speech.selectVoice();
-  _cleanupGameUI();
-  _resetGameState();
   _initializeDeckMode();
 
   updateScoreDisplay();
@@ -281,7 +308,9 @@ export function handleBackspace() {
 }
 
 export function handleVoiceRepeat() {
-  _speakSyllable();
+  if (state.timerModeEnabled) return;
+  state.isSpeechUnlocked = true;
+  speech.speakCurrentSyllable(true);
 }
 
 function _playCorrectFeedback() {
@@ -325,7 +354,10 @@ export function handlePronunciationEnter() {
     wrongSound.play();
   }
 
-  setTimeout(_speakSyllable, 200);
+  if (state.speechTimeout) {
+    clearTimeout(state.speechTimeout);
+  }
+  state.speechTimeout = setTimeout(() => speech.speakCurrentSyllable(true), 200);
 
   if (state.translationElement) {
     state.translationElement.textContent = state.currentSyllable.question;
@@ -334,7 +366,7 @@ export function handlePronunciationEnter() {
   state.hintUsed = true;
 }
 
-function _handleFsrsRepeat() {
+function _handleSrsRepeat() {
   state.hintUsed = false;
   state.userTyped = "";
   if (state.translationElement) state.translationElement.textContent = "";
@@ -346,17 +378,37 @@ function _handleFsrsRepeat() {
   displaySyllable();
 }
 
-function _calculateFsrsTimings() {
+function _calculateSrsTimings() {
   const endTime = Date.now();
   const reactionTime = state.firstKeyTime
-    ? state.firstKeyTime - state.cardStartTime
-    : endTime - state.cardStartTime;
-  const typingTime = state.firstKeyTime ? endTime - state.firstKeyTime : 0;
+    ? (state.firstKeyTime - state.cardStartTime) / 1000
+    : (endTime - state.cardStartTime) / 1000;
+  
+  const totalTime = (endTime - state.cardStartTime) / 1000;
+  const typingTime = state.firstKeyTime ? (endTime - state.firstKeyTime) / 1000 : 0;
+  
+  const charCount = state.currentSyllable.answer.length;
+  const cps = typingTime > 0 ? charCount / typingTime : 0;
+
+  const signals = {
+    reactionTime,
+    typingTime,
+    totalTime,
+    cps,
+    backspaceCount: state.backspaceCount,
+    maxPause: state.maxPause,
+    charCount
+  };
+
   state.firstKeyTime = 0;
-  return { reactionTime, typingTime };
+  state.lastKeyTime = 0;
+  state.backspaceCount = 0;
+  state.maxPause = 0;
+
+  return signals;
 }
 
-function _handleFsrsIncorrect() {
+function _handleSrsIncorrect() {
   if (state.wrongSoundEnabled) {
     wrongSound.currentTime = 0;
     wrongSound.play();
@@ -371,7 +423,7 @@ function _handleFsrsIncorrect() {
   state.firstKeyTime = 0;
 }
 
-function _handleFsrsCorrect() {
+function _handleSrsCorrect() {
   _playCorrectFeedback();
   state.score++;
   if (state.translationElement) state.translationElement.textContent = "";
@@ -383,25 +435,42 @@ function _handleFsrsCorrect() {
   displaySyllable();
 }
 
-export function handleFsrsEnter() {
+export function handleSrsEnter() {
   if (state.hintUsed) {
-    _handleFsrsRepeat();
+    _handleSrsRepeat();
     return;
   }
 
-  const isCorrect = state.userTyped === state.currentSyllable.answer;
+  const userTyped = state.userTyped.trim().toLowerCase();
+  const answer = state.currentSyllable.answer.trim().toLowerCase();
+  const isCorrect = userTyped === answer;
+  const isMature = state.currentSyllable.s >= 21;
+  const isTypo = isMature && utils.levenshteinDistance(userTyped, answer) === 1;
+
   let grade = 0;
 
-  if (isCorrect) {
-    const timings = _calculateFsrsTimings();
-    grade = fsrs.calculatePerformanceGrade(timings);
+  if (isCorrect || isTypo) {
+    const signals = _calculateSrsTimings();
+    
+    // Update User Baselines (EMA)
+    // Use a higher alpha (0.4) for the first 20 reviews to accelerate calibration
+    const alpha = state.totalReviews < 20 ? 0.4 : 0.1;
+    state.rtEma = (1 - alpha) * state.rtEma + alpha * signals.reactionTime;
+    if (signals.cps > 0) {
+      state.cpsEma = (1 - alpha) * state.cpsEma + alpha * signals.cps;
+    }
+    state.totalReviews++;
+    saveGlobalSettings();
 
-    fsrs.updateFsrsData(state.currentSyllable, grade);
-    _handleFsrsCorrect(grade);
+    grade = srs.calculatePerformanceGrade(signals, state.rtEma, state.cpsEma);
+    const finalGrade = isTypo ? 1 : grade;
+
+    srs.updateSrsData(state.currentSyllable, finalGrade);
+    _handleSrsCorrect(finalGrade);
   } else {
     grade = 0;
-    fsrs.updateFsrsData(state.currentSyllable, grade);
-    _handleFsrsIncorrect();
+    srs.updateSrsData(state.currentSyllable, grade);
+    _handleSrsIncorrect();
   }
 
   updateScoreDisplay();
@@ -430,8 +499,9 @@ function _handleFreeModeIncorrect() {
 
   if (state.restartOnWrongEnabled) {
     setTimeout(() => {
-      showCustomAlert(getTranslation("WRONG_ANSWER_RESTART"));
-      startGame();
+      showCustomAlert(getTranslation("WRONG_ANSWER_RESTART"), () => {
+        startGame();
+      });
     }, 100);
   }
 }
@@ -567,6 +637,11 @@ export function setGameScope(scopeInput) {
 
   if (startLevel > endLevel) {
     [startLevel, endLevel] = [endLevel, startLevel];
+  }
+
+  if (startLevel > maxLevel) {
+    showCustomAlert(getTranslation("NO_CARDS_FOR_LEVEL_SCOPE"));
+    return;
   }
 
   if (startLevel > maxLevel) startLevel = maxLevel;

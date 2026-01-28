@@ -40,15 +40,14 @@ function _loadLastDeck() {
     return;
   }
 
-  lastDeck.settings.evaluativeModeEnabled = false;
-  lastDeck.settings.pronunciationModeEnabled = false;
-  deckManager.saveDecks();
   deckManager.selectDeck(lastDeckId);
 }
 
 function _initCustomModalListeners() {
   dom.customAlertCloseBtn.addEventListener("click", () => {
+    if (state.currentAlertOnOk) state.currentAlertOnOk();
     dom.customAlertModal.style.display = "none";
+    state.currentAlertOnOk = null;
   });
 
   dom.customConfirmCancelBtn.addEventListener("click", () => {
@@ -146,7 +145,7 @@ function _initVoiceListeners() {
 
     if (!isVoiceSelected) {
       dom.modePronunciationToggle.checked = false;
-      dom.modeFreeToggle.checked = !dom.modeFsrsToggle.checked;
+      dom.modeFreeToggle.checked = !dom.modeSrsToggle.checked;
       updateModeSettingsVisibility();
     }
   });
@@ -224,12 +223,12 @@ function _initDeckModalListeners() {
     dom.statsModal.style.display = "none";
   });
 
-  dom.statsResetFsrsBtn.addEventListener("click", () => {
+  dom.statsResetSrsBtn.addEventListener("click", () => {
     const deck = state.allDecks.find((d) => d.id === state.currentDeckStatsId);
     if (!deck) return;
 
     showCustomConfirm(
-      getTranslation("RESET_FSRS_CONFIRMATION").replace("{0}", deck.name),
+      getTranslation("RESET_SRS_CONFIRMATION").replace("{0}", deck.name),
       () => {
         deck.content.forEach((card) => {
           card.s = 0.1;
@@ -240,7 +239,7 @@ function _initDeckModalListeners() {
         deckManager.saveDecks();
         deckManager.showDeckStats(state.currentDeckStatsId);
 
-        showCustomAlert(getTranslation(FSRS_STATS_RESET));
+        showCustomAlert(getTranslation("SRS_STATS_RESET"));
       },
     );
   });
@@ -301,9 +300,42 @@ function _initDeckSettingsListeners() {
     handleGameSpeedChange();
   });
 
+  // SRS Settings Listeners
+  const handleTargetRetentionChange = () => {
+    let val = parseInt(dom.targetRetentionInput.value);
+    if (isNaN(val) || val < 70) val = 70;
+    if (val > 99) val = 99;
+    dom.targetRetentionInput.value = val;
+  };
+  dom.targetRetentionInput.addEventListener("change", handleTargetRetentionChange);
+  dom.targetRetentionDecrement.addEventListener("click", () => {
+    dom.targetRetentionInput.value = Math.max(70, parseInt(dom.targetRetentionInput.value) - 1);
+    handleTargetRetentionChange();
+  });
+  dom.targetRetentionIncrement.addEventListener("click", () => {
+    dom.targetRetentionInput.value = Math.min(99, parseInt(dom.targetRetentionInput.value) + 1);
+    handleTargetRetentionChange();
+  });
+
+  const handleNewCardLimitChange = () => {
+    let val = parseInt(dom.newCardLimitInput.value);
+    if (isNaN(val) || val < 1) val = 1;
+    if (val > 100) val = 100;
+    dom.newCardLimitInput.value = val;
+  };
+  dom.newCardLimitInput.addEventListener("change", handleNewCardLimitChange);
+  dom.newCardLimitDecrement.addEventListener("click", () => {
+    dom.newCardLimitInput.value = Math.max(1, parseInt(dom.newCardLimitInput.value) - 1);
+    handleNewCardLimitChange();
+  });
+  dom.newCardLimitIncrement.addEventListener("click", () => {
+    dom.newCardLimitInput.value = Math.min(100, parseInt(dom.newCardLimitInput.value) + 1);
+    handleNewCardLimitChange();
+  });
+
   const modeToggles = [
     dom.modeFreeToggle,
-    dom.modeFsrsToggle,
+    dom.modeSrsToggle,
     dom.modePronunciationToggle,
     dom.modeTimerToggle,
   ];
@@ -326,7 +358,7 @@ function _handleKeyEnter() {
   if (state.pronunciationModeEnabled) {
     game.handlePronunciationEnter();
   } else if (state.evaluativeModeEnabled) {
-    game.handleFsrsEnter();
+    game.handleSrsEnter();
     deckManager.saveDecks();
   } else {
     game.handleFreeModeEnter();
@@ -363,20 +395,27 @@ function _handleKeyDown(e) {
     return;
   }
 
+  if (e.key === "Delete") {
+    e.preventDefault();
+    if (!state.timerModeEnabled) {
+      game.handleDeleteCurrentCardRequest();
+    }
+    return;
+  }
+
   if (!state.currentSyllable || !state.currentSyllable.answer) return;
 
   if (e.key === "Backspace") {
     game.handleBackspace();
-  } else if (e.key === "Control" && !state.pronunciationModeEnabled) {
+  } else if (e.key === "Shift" && !state.pronunciationModeEnabled && !state.timerModeEnabled) {
     game.handleVoiceRepeat();
   } else if (e.key === "Enter") {
     _handleKeyEnter();
-  } else if (e.key === "F1") {
-    e.preventDefault();
-    game.handleDeleteCurrentCardRequest();
   } else if (e.key === "Alt") {
     e.preventDefault();
-    game.handleEditCurrentCardRequest();
+    if (!state.timerModeEnabled) {
+      game.handleEditCurrentCardRequest();
+    }
   }
 }
 
@@ -454,6 +493,9 @@ async function init() {
   _initModalCloseResumeListeners();
 
   document.addEventListener("keydown", _handleGlobalModalKeys);
+
+  // Add one-time listeners to unlock speech synthesis on first interaction
+  speech.initSpeechUnlock();
 
   _loadLastDeck();
 }

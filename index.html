@@ -128,9 +128,9 @@
         </ul>
         <div class="modal-actions justify-end">
           <button
-            id="statsResetFsrsBtn"
+            id="statsResetSrsBtn"
             class="btn btn-danger"
-            data-i18n="RESET_FSRS"
+            data-i18n="RESET_SRS"
           ></button>
           <button
             id="statsCloseBtn"
@@ -156,6 +156,10 @@
         <label>
           <span data-i18n="DARK_MODE"></span>:
           <input type="checkbox" id="generalDarkModeToggle" />
+        </label>
+        <label>
+          <span data-i18n="AUTOPLAY_AUDIO"></span>:
+          <input type="checkbox" id="generalAutoplayToggle" checked />
         </label>
 
         <label for="languageSelector" style="margin-top: 30px;">
@@ -224,12 +228,21 @@
               />
             </label>
             <label>
-              <span data-i18n="FSRS"></span>
+              <span data-i18n="SPEED_MODE">Speed Mode</span>
               <input
                 type="checkbox"
-                id="modeFsrsToggle"
+                id="modeTimerToggle"
                 name="gameMode"
-                value="fsrs"
+                value="timer"
+              />
+            </label>
+            <label>
+              <span data-i18n="SRS"></span>
+              <input
+                type="checkbox"
+                id="modeSrsToggle"
+                name="gameMode"
+                value="srs"
               />
             </label>
             <label>
@@ -241,17 +254,27 @@
                 value="pronunciation"
               />
             </label>
-            <label>
-              <span data-i18n="SPEED_MODE">Speed Mode</span>
-              <input
-                type="checkbox"
-                id="modeTimerToggle"
-                name="gameMode"
-                value="timer"
-              />
-            </label>
           </div>
         </fieldset>
+        
+        <div id="srsModeSettingsDiv" style="display: none;">
+          <label>
+            <span data-i18n="TARGET_RETENTION_PCT"></span>:
+            <span class="input-number-control">
+              <button type="button" class="btn-step" id="targetRetentionDecrement">-</button>
+              <input type="number" id="targetRetentionInput" min="70" max="99" value="90" step="1" />
+              <button type="button" class="btn-step" id="targetRetentionIncrement">+</button>
+            </span>
+          </label>
+          <label>
+            <span data-i18n="NEW_CARDS_LIMIT"></span>:
+            <span class="input-number-control">
+              <button type="button" class="btn-step" id="newCardLimitDecrement">-</button>
+              <input type="number" id="newCardLimitInput" min="1" max="100" value="20" step="1" />
+              <button type="button" class="btn-step" id="newCardLimitIncrement">+</button>
+            </span>
+          </label>
+        </div>
 
         <label id="gameSpeedGroup" style="display: none;">
           <span data-i18n="GAME_SPEED"></span>:
@@ -436,14 +459,19 @@
 
 
     <div id="shortcutsPanel">
-      <span class="shortcut-item">
-        <span class="shortcut-label" data-i18n="DELETE_CARD">Delete Card</span>:
-        <span class="shortcut-inst"><kbd>F1</kbd></span>
+      <span id="repeatAudioShortcut" class="shortcut-item">
+        <span class="shortcut-label" data-i18n="REPEAT_AUDIO">Repeat Audio</span>:
+        <span class="shortcut-inst"><kbd>Shift</kbd></span>
       </span>
-      <span class="shortcut-separator">|</span>
-      <span class="shortcut-item">
+      <span id="repeatAudioSeparator" class="shortcut-separator">|</span>
+      <span id="editCardShortcut" class="shortcut-item">
         <span class="shortcut-label" data-i18n="EDIT_CARD">Edit Card</span>:
         <span class="shortcut-inst"><kbd>Alt</kbd></span>
+      </span>
+      <span id="editCardSeparator" class="shortcut-separator">|</span>
+      <span id="deleteCardShortcut" class="shortcut-item">
+        <span class="shortcut-label" data-i18n="DELETE_CARD">Delete Card</span>:
+        <span class="shortcut-inst"><kbd>Del</kbd></span>
       </span>
       <span id="levelRangeSeparator" class="shortcut-separator">|</span>
       <span id="levelRangeShortcut" class="shortcut-item">

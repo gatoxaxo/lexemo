@@ -1,5 +1,5 @@
 import { state, GROUP_SIZE, GLOBAL_SETTINGS_KEY } from "./state.js";
-import * as fsrs from "./fsrs.js";
+import * as srs from "./srs.js";
 import { setLanguage, getTranslation, detectBrowserLanguage } from "./i18n/i18n.js";
 
 export const dom = {
@@ -46,7 +46,7 @@ export const dom = {
   statsLearning: document.getElementById("statsLearning"),
   statsDue: document.getElementById("statsDue"),
   statsMature: document.getElementById("statsMature"),
-  statsResetFsrsBtn: document.getElementById("statsResetFsrsBtn"),
+  statsResetSrsBtn: document.getElementById("statsResetSrsBtn"),
   customAlertModal: document.getElementById("customAlertModal"),
   customAlertMessage: document.getElementById("customAlertMessage"),
   customAlertCloseBtn: document.getElementById("customAlertCloseBtn"),
@@ -67,12 +67,15 @@ export const dom = {
   ),
   generalWrongSoundToggle: document.getElementById("generalWrongSoundToggle"),
   generalDarkModeToggle: document.getElementById("generalDarkModeToggle"),
+  generalAutoplayToggle: document.getElementById("generalAutoplayToggle"),
   generalSettingsCancelBtn: document.getElementById("generalSettingsCancelBtn"),
   generalSettingsSaveBtn: document.getElementById("generalSettingsSaveBtn"),
   modeFreeToggle: document.getElementById("modeFreeToggle"),
-  modeFsrsToggle: document.getElementById("modeFsrsToggle"),
+  modeSrsToggle: document.getElementById("modeSrsToggle"),
   modePronunciationToggle: document.getElementById("modePronunciationToggle"),
   modeTimerToggle: document.getElementById("modeTimerToggle"),
+  repeatAudioShortcut: document.getElementById("repeatAudioShortcut"),
+  repeatAudioSeparator: document.getElementById("repeatAudioSeparator"),
   gameSpeedInput: document.getElementById("gameSpeedInput"),
   gameSpeedDecrement: document.getElementById("gameSpeedDecrement"),
   gameSpeedIncrement: document.getElementById("gameSpeedIncrement"),
@@ -80,12 +83,24 @@ export const dom = {
   settingsCancelBtn: document.getElementById("settingsCancelBtn"),
   settingsSaveBtn: document.getElementById("settingsSaveBtn"),
   languageSelector: document.getElementById("languageSelector"),
+  deleteCardShortcut: document.getElementById("deleteCardShortcut"),
+  editCardShortcut: document.getElementById("editCardShortcut"),
+  editCardSeparator: document.getElementById("editCardSeparator"),
   levelRangeShortcut: document.getElementById("levelRangeShortcut"),
   levelRangeSeparator: document.getElementById("levelRangeSeparator"),
+  gameArea: document.getElementById("game-area"),
+  srsModeSettingsDiv: document.getElementById("srsModeSettingsDiv"),
+  targetRetentionInput: document.getElementById("targetRetentionInput"),
+  targetRetentionDecrement: document.getElementById("targetRetentionDecrement"),
+  targetRetentionIncrement: document.getElementById("targetRetentionIncrement"),
+  newCardLimitInput: document.getElementById("newCardLimitInput"),
+  newCardLimitDecrement: document.getElementById("newCardLimitDecrement"),
+  newCardLimitIncrement: document.getElementById("newCardLimitIncrement"),
 };
 
-export function showCustomAlert(message) {
+export function showCustomAlert(message, onOk) {
   dom.customAlertMessage.textContent = message;
+  state.currentAlertOnOk = onOk;
   dom.customAlertModal.style.display = "flex";
 }
 
@@ -100,6 +115,10 @@ function _applyGlobalSettings(settings) {
   state.correctSoundEnabled = settings.correctSoundEnabled;
   state.wrongSoundEnabled = settings.wrongSoundEnabled;
   state.darkModeEnabled = settings.darkModeEnabled;
+  state.autoplayEnabled = settings.autoplayEnabled ?? true;
+  state.rtEma = settings.rtEma ?? 2.0;
+  state.cpsEma = settings.cpsEma ?? 4.0;
+  state.totalReviews = settings.totalReviews ?? 0;
   document.body.classList.toggle("dark-mode", state.darkModeEnabled);
 }
 
@@ -108,7 +127,11 @@ export async function saveGlobalSettings() {
     correctSoundEnabled: dom.generalCorrectSoundToggle.checked,
     wrongSoundEnabled: dom.generalWrongSoundToggle.checked,
     darkModeEnabled: dom.generalDarkModeToggle.checked,
+    autoplayEnabled: dom.generalAutoplayToggle.checked,
     language: dom.languageSelector.value,
+    rtEma: state.rtEma,
+    cpsEma: state.cpsEma,
+    totalReviews: state.totalReviews,
   };
   localStorage.setItem(GLOBAL_SETTINGS_KEY, JSON.stringify(settings));
   _applyGlobalSettings(settings);
@@ -129,6 +152,7 @@ export async function loadGlobalSettings() {
   dom.generalCorrectSoundToggle.checked = s.correctSoundEnabled;
   dom.generalWrongSoundToggle.checked = s.wrongSoundEnabled;
   dom.generalDarkModeToggle.checked = s.darkModeEnabled;
+  dom.generalAutoplayToggle.checked = s.autoplayEnabled ?? true;
   dom.languageSelector.value = s.language || detectBrowserLanguage();
 
   _applyGlobalSettings(s);
@@ -166,8 +190,10 @@ export function renderDeckModal() {
 export function updateModeSettingsVisibility() {
   const isFree = dom.modeFreeToggle.checked;
   const isTimer = dom.modeTimerToggle.checked;
+  const isSrs = dom.modeSrsToggle.checked;
 
   dom.freeModeSettingsDiv.style.display = isFree || isTimer ? "block" : "none";
+  dom.srsModeSettingsDiv.style.display = isSrs ? "block" : "none";
   
   const gameSpeedGroup = document.getElementById("gameSpeedGroup");
   if (gameSpeedGroup) gameSpeedGroup.style.display = isTimer ? "flex" : "none";
@@ -195,7 +221,7 @@ export function updateModeSettingsVisibility() {
   }
 }
 
-function _getFsrsScoreText(stats) {
+function _getSrsScoreText(stats) {
   const scoreLabel = getTranslation("SCORE");
   const reviewLabel = getTranslation("REVIEW");
   const newLabel = getTranslation("NEW");
@@ -216,9 +242,10 @@ function _getFreeModeScoreText() {
     maxOriginalLevel === 0;
 
   if (isFullScope) {
-    return `${scoreLabel}: ${state.score} | ${levelLabel}: ${currentLevelInScope} / ${totalLevelsInScope}`;
+    return `${scoreLabel}: ${state.score} | ${levelLabel}: ${currentLevelInScope}/${totalLevelsInScope}`;
   } else {
-    return `${scoreLabel}: ${state.score} | ${levelLabel}: ${currentLevelInScope} / ${state.levelScopeEnd}`;
+    const actualLevel = state.levelScopeStart + state.currentGroupIndex;
+    return `${scoreLabel}: ${state.score} | ${levelLabel}: ${actualLevel}/${state.levelScopeEnd}`;
   }
 }
 
@@ -227,8 +254,8 @@ export function updateScoreDisplay() {
   if (!deck) return;
 
   if (state.evaluativeModeEnabled) {
-    const stats = fsrs.calculateDeckStats(deck.content);
-    dom.scoreText.textContent = _getFsrsScoreText(stats);
+    const stats = srs.calculateDeckStats(deck.content);
+    dom.scoreText.textContent = _getSrsScoreText(stats);
   } else {
     dom.scoreText.textContent = _getFreeModeScoreText();
   }
@@ -236,24 +263,41 @@ export function updateScoreDisplay() {
 }
 
 export function updateShortcutsVisibility() {
-  if (state.timerModeEnabled) {
-    document.getElementById("shortcutsPanel").style.display = "none";
-    return;
-  } else {
-    document.getElementById("shortcutsPanel").style.display = "flex";
-  }
+  const panel = document.getElementById("shortcutsPanel");
+  panel.style.display = "flex";
 
-  const isFsrs = state.evaluativeModeEnabled;
-  const display = isFsrs ? "none" : "flex";
-  if (dom.levelRangeShortcut) dom.levelRangeShortcut.style.display = display;
-  if (dom.levelRangeSeparator) dom.levelRangeSeparator.style.display = display;
+  const isSrs = state.evaluativeModeEnabled;
+  const isTimer = state.timerModeEnabled;
+  const isPronunciation = state.pronunciationModeEnabled;
+
+  // Visibility rules
+  const repeatVisible = !isTimer && !isPronunciation;
+  const editVisible = !isTimer;
+  const deleteVisible = !isTimer;
+  const levelRangeVisible = !isSrs;
+
+  // Apply visibility to shortcuts
+  if (dom.repeatAudioShortcut) dom.repeatAudioShortcut.style.display = repeatVisible ? "flex" : "none";
+  if (dom.editCardShortcut) dom.editCardShortcut.style.display = editVisible ? "flex" : "none";
+  if (dom.deleteCardShortcut) dom.deleteCardShortcut.style.display = deleteVisible ? "flex" : "none";
+  if (dom.levelRangeShortcut) dom.levelRangeShortcut.style.display = levelRangeVisible ? "flex" : "none";
+
+  // Apply visibility to separators
+  // repeatAudioSeparator: between Repeat and Edit
+  if (dom.repeatAudioSeparator) dom.repeatAudioSeparator.style.display = (repeatVisible && editVisible) ? "flex" : "none";
+  
+  // editCardSeparator: between Edit and Delete
+  if (dom.editCardSeparator) dom.editCardSeparator.style.display = (editVisible && deleteVisible) ? "flex" : "none";
+  
+  // levelRangeSeparator: between Delete and Level Range
+  if (dom.levelRangeSeparator) dom.levelRangeSeparator.style.display = (deleteVisible && levelRangeVisible) ? "flex" : "none";
 }
 
-function _handleCongratsClose(isFsrs, startGameCallback) {
+function _handleCongratsClose(isSrs, startGameCallback) {
   dom.congratsModal.style.display = "none";
   dom.restartBtn.onclick = null;
 
-  if (isFsrs) {
+  if (isSrs) {
     const deck = state.allDecks.find((d) => d.id === state.currentDeckId);
     if (deck) {
       deck.settings.evaluativeModeEnabled = false;
@@ -263,9 +307,9 @@ function _handleCongratsClose(isFsrs, startGameCallback) {
   startGameCallback();
 }
 
-export function showCongrats(isFsrs = false, startGameCallback) {
-  if (isFsrs) {
-    dom.congratsMessage.textContent = getTranslation("FSRS_NO_CARDS");
+export function showCongrats(isSrs = false, startGameCallback) {
+  if (isSrs) {
+    dom.congratsMessage.textContent = getTranslation("SRS_NO_CARDS");
     state.evaluativeModeEnabled = false;
     state.pronunciationModeEnabled = false;
     updateShortcutsVisibility();
@@ -275,7 +319,7 @@ export function showCongrats(isFsrs = false, startGameCallback) {
 
   dom.congratsModal.style.display = "flex";
 
-  const closeModal = () => _handleCongratsClose(isFsrs, startGameCallback);
+  const closeModal = () => _handleCongratsClose(isSrs, startGameCallback);
 
   dom.restartBtn.onclick = closeModal;
 
@@ -342,10 +386,17 @@ export function isModalOpen() {
 
 function setupModal(modalElement, onOutsideClick) {
   if (modalElement) {
+    let isMouseDownOnBackdrop = false;
+
+    modalElement.addEventListener("mousedown", (e) => {
+      isMouseDownOnBackdrop = e.target === modalElement;
+    });
+
     modalElement.addEventListener("click", (e) => {
-      if (e.target === modalElement) {
+      if (e.target === modalElement && isMouseDownOnBackdrop) {
         onOutsideClick();
       }
+      isMouseDownOnBackdrop = false;
     });
   }
 }
@@ -393,7 +444,7 @@ export function initModalCloseListeners() {
   });
 
   setupModal(dom.customAlertModal, () => {
-    dom.customAlertModal.style.display = "none";
+    dom.customAlertCloseBtn.click();
   });
 
   setupModal(dom.editCardModal, () => {

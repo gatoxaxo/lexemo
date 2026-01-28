@@ -468,24 +468,37 @@ export class TimerMode {
     state.score = 0;
     updateScoreDisplay();
     cancelAnimationFrame(this.animationFrameId);
+    
+    if (speechSynthesis.speaking || speechSynthesis.pending) {
+        speechSynthesis.cancel();
+    }
+
     if (this.container) {
         this.container.style.display = "none";
         this.container.innerHTML = "";
     }
-    document.getElementById("game-area").style.display = "flex";  
+    
+    const gameArea = document.getElementById("game-area");
+    if (gameArea) gameArea.style.display = "flex";  
+    
     document.removeEventListener("keydown", this.handleInput);
     document.removeEventListener("keypress", this.handleKeyPress);
+
+    // Clear all active elements
+    this.words = [];
+    this.projectiles = [];
+    this.windParticles = [];
+    this.trailParticles = [];
   }
 
   gameOver() {
       if (!this.isActive) return;
       this.stop();
-      showCustomAlert(getTranslation("WRONG_ANSWER_RESTART"));  
-      setTimeout(() => {
-      if (this.restartCallback) {
-          this.restartCallback();
-      }
-      }, 100);
+      showCustomAlert(getTranslation("WRONG_ANSWER_RESTART"), () => {
+          if (this.restartCallback) {
+              this.restartCallback();
+          }
+      });
   }
 
   handleInput = (e) => {
@@ -555,25 +568,11 @@ export class TimerMode {
           match.isSolved = true;
           this.userInput = "";
           this.inputDisplay.textContent = "";
-          match.explode(true);  
           
            
           const idx = state.currentGroup.findIndex(s => s.question === match.syllable.question);
           if (idx > -1) {
               state.currentGroup.splice(idx, 1);
-          }
-          
-           
-          if (state.currentGroup.length === 0 && this.words.filter(w => !w.isSolved).length === 0) {
-               
-              state.currentGroupIndex++;
-              if (!this.loadGroup(state.currentGroupIndex)) {
-                   
-                  this.stop();
-                  showCongrats(false, this.restartCallback);  
-              } else {
-                  updateScoreDisplay();  
-              }
           }
       }
   }
@@ -668,6 +667,21 @@ export class TimerMode {
     });
 
     this.particles = this.particles.filter(p => p.update());
+
+    // Check for group completion after all words have exploded and projectiles hit
+    if (this.isActive && state.currentGroup.length === 0 && this.words.length === 0 && this.projectiles.length === 0) {
+        state.currentGroupIndex++;
+        if (!this.loadGroup(state.currentGroupIndex)) {
+            this.stop();
+            // Reset score and group index for next game
+            state.score = 0;
+            state.currentGroupIndex = 0;
+            updateScoreDisplay();
+            showCongrats(false, this.restartCallback);
+        } else {
+            updateScoreDisplay();
+        }
+    }
 
     this.animationFrameId = requestAnimationFrame(this.loop);
   };

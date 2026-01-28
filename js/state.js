@@ -52,10 +52,29 @@ export const state = {
 
   currentConfirmOnOk: null,
   currentConfirmOnCancel: null,
+  currentAlertOnOk: null,
 
   isLevelSkipActive: false,
   levelSkipInput: "",
 
   levelScopeStart: 1,
   levelScopeEnd: 1,
+  isSpeechUnlocked: false,
+  hasSpokenCurrentCard: false,
+
+  // User typing baselines (EMA)
+  rtEma: 2.0, // Default 2s reaction time
+  cpsEma: 4.0, // Default 4 chars/sec
+  
+  // Per-card typing signals
+  lastKeyTime: 0,
+  backspaceCount: 0,
+  maxPause: 0,
+  speechTimeout: null,
+  totalReviews: 0,
+
+  // Advanced SRS and Game Settings
+  autoplayEnabled: true,
+  targetRetention: 0.9,
+  newCardLimit: 20,
 };

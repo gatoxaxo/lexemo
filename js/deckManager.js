@@ -5,7 +5,7 @@ import {
   GROUP_SIZE,
 } from "./state.js";
 import * as utils from "./utils.js";
-import * as fsrs from "./fsrs.js";
+import * as srs from "./srs.js";
 import {
   dom,
   renderDeckModal,
@@ -13,7 +13,7 @@ import {
   showCustomConfirm,
   updateModeSettingsVisibility,
 } from "./ui.js";
-import { startGame } from "./game.js";
+import { startGame, stopGame } from "./game.js";
 import { selectVoice, stopRecognition } from "./speech.js";
 import { getTranslation } from "./i18n/i18n.js";
 import { timerMode } from "./timerMode.js";
@@ -49,16 +49,19 @@ function _applyVoiceSetting(voiceIndex, onCompleteCallback) {
 }
 
 export function applyDeckSettingsToGame(settings, onCompleteCallback) {
+  // Lock audio and clear state immediately to prevent bleed during transition
+  stopGame();
+
   state.randomToggleEnabled = settings.randomToggleEnabled ?? false;
   state.colorHintEnabled = settings.colorHintEnabled ?? true;
   state.positionHintEnabled = settings.positionHintEnabled ?? true;
   state.answerTipLetters = settings.answerTipLetters ?? 0;
   state.restartOnWrongEnabled = settings.restartOnWrongEnabled ?? false;
   state.evaluativeModeEnabled = settings.evaluativeModeEnabled ?? false;
-  state.evaluativeModeEnabled = settings.evaluativeModeEnabled ?? false;
-  state.pronunciationModeEnabled = settings.pronunciationModeEnabled ?? false;
   state.pronunciationModeEnabled = settings.pronunciationModeEnabled ?? false;
   state.timerModeEnabled = settings.timerModeEnabled ?? false;
+  state.targetRetention = settings.targetRetention ?? 0.9;
+  state.newCardLimit = settings.newCardLimit ?? 20;
   
   const oldSpeed = state.gameSpeed;
   const newSpeed = settings.gameSpeed || 1;
@@ -116,7 +119,7 @@ export function showDeckStats(deckId) {
   if (!deck) return;
 
   state.currentDeckStatsId = deckId;
-  const stats = fsrs.calculateDeckStats(deck.content);
+  const stats = srs.calculateDeckStats(deck.content);
   _updateStatsUI(stats, deck.name);
   dom.statsModal.style.display = "flex";
 }
@@ -175,9 +178,10 @@ export function applySettingsToModalUI(settings) {
   dom.colorHintToggle.checked = s.colorHintEnabled;
   dom.positionHintToggle.checked = s.positionHintEnabled;
   dom.restartOnWrongToggle.checked = s.restartOnWrongEnabled;
-  dom.restartOnWrongToggle.checked = s.restartOnWrongEnabled;
   dom.answerTipInput.value = s.answerTipLetters;
   dom.gameSpeedInput.value = s.gameSpeed || 1;
+  dom.targetRetentionInput.value = Math.round((s.targetRetention ?? 0.9) * 100);
+  dom.newCardLimitInput.value = s.newCardLimit ?? 20;
 
   const voicesLoaded = dom.voiceSelect.options.length > 1;
   let pMode = s.pronunciationModeEnabled;
@@ -186,7 +190,7 @@ export function applySettingsToModalUI(settings) {
     pMode = false;
   }
 
-  dom.modeFsrsToggle.checked = s.evaluativeModeEnabled;
+  dom.modeSrsToggle.checked = s.evaluativeModeEnabled;
   dom.modePronunciationToggle.checked = pMode;
   dom.modeTimerToggle.checked = s.timerModeEnabled;
   dom.modeFreeToggle.checked = !s.evaluativeModeEnabled && !pMode && !s.timerModeEnabled;
@@ -221,11 +225,13 @@ function readSettingsFromUI() {
     positionHintEnabled: dom.positionHintToggle.checked,
     answerTipLetters: parseInt(dom.answerTipInput.value) || 0,
     restartOnWrongEnabled: dom.restartOnWrongToggle.checked,
-    evaluativeModeEnabled: dom.modeFsrsToggle.checked,
+    evaluativeModeEnabled: dom.modeSrsToggle.checked,
     pronunciationModeEnabled: dom.modePronunciationToggle.checked,
     timerModeEnabled: dom.modeTimerToggle.checked,
     gameSpeed: parseInt(dom.gameSpeedInput.value, 10) || 1,
     voiceIndex: dom.voiceSelect.value,
+    targetRetention: parseInt(dom.targetRetentionInput.value) / 100,
+    newCardLimit: parseInt(dom.newCardLimitInput.value),
   };
 }
 
@@ -279,7 +285,7 @@ function _parsePendingContent() {
   }
 }
 
-function _mergeFsrsData(newContentBase, oldContent) {
+function _mergeSrsData(newContentBase, oldContent) {
   const oldCardMap = new Map();
   oldContent.forEach((card) => {
     const q = (card.question || "").trim().toLowerCase();
@@ -313,7 +319,7 @@ function _mergeFsrsData(newContentBase, oldContent) {
 }
 
 function _updateExistingDeck(deck, deckName, settings, newContentBase) {
-  const finalContent = _mergeFsrsData(newContentBase, deck.content || []);
+  const finalContent = _mergeSrsData(newContentBase, deck.content || []);
   deck.name = deckName;
   deck.settings = settings;
   deck.content = finalContent;
@@ -325,7 +331,7 @@ function _createNewDeck(deckName, settings, newContentBase) {
     return false;
   }
 
-  const newContentWithFSRS = newContentBase.map((card) => ({
+  const newContentWithSRS = newContentBase.map((card) => ({
     question: (card.question || "").trim().toLowerCase(),
     answer: (card.answer || "").trim().toLowerCase(),
     hint: card.hint || "",
@@ -338,7 +344,7 @@ function _createNewDeck(deckName, settings, newContentBase) {
   const newDeck = {
     id: "deck_" + Date.now(),
     name: deckName,
-    content: newContentWithFSRS,
+    content: newContentWithSRS,
     settings: settings,
   };
   state.allDecks.push(newDeck);
@@ -355,6 +361,7 @@ function _finalizeDeckSave() {
       (d) => d.id === state.currentDeckId,
     );
     state.syllableList = updatedDeck.content;
+    state.originalSyllableList = [...updatedDeck.content];
 
     applyDeckSettingsToGame(updatedDeck.settings, startGame);
 
@@ -548,4 +555,13 @@ export function initJsonEditor() {
   dom.mergeBtn.addEventListener("click", _handleMergeClick);
   dom.cancelJsonBtn.addEventListener("click", _handleCancelJsonClick);
   dom.saveJsonBtn.addEventListener("click", _handleSaveJsonClick);
+
+  // Tab key inserts spaces for indentation (preserves undo history)
+  dom.jsonEditorTextarea.addEventListener("keydown", (e) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      // Use execCommand to preserve undo history
+      document.execCommand("insertText", false, "    ");
+    }
+  });
 }
