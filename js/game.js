@@ -105,30 +105,38 @@ function _createTranslationElement() {
   return translationEl;
 }
 
+function _createQuestionElement() {
+  const questionEl = document.createElement("span");
+  questionEl.classList.add("question-text");
+  return questionEl;
+}
+
+
 function _applySrsStyles(syllableEl, translationEl) {
   syllableEl.style.color = "inherit";
   syllableEl.style.textShadow = "0 0 2px currentColor";
-  syllableEl.textContent = state.currentSyllable.question;
   translationEl.style.color = "inherit";
+
   translationEl.style.textShadow = "0 0 2px currentColor";
   syllableEl.style.left = "50%";
   syllableEl.style.top = "50%";
   syllableEl.style.transform = "translate(-50%, -50%)";
 }
 
-function _setSyllableText(syllableEl) {
+function _setSyllableText(questionEl) {
   let placeholder =
     state.currentSyllable.answer.length - state.answerTipLetters > 0 ? "~" : "";
   if (state.answerTipLetters > 0 && !state.pronunciationModeEnabled) {
-    syllableEl.textContent =
+    questionEl.textContent =
       state.currentSyllable.question +
       " → " +
       state.currentSyllable.answer.substring(0, state.answerTipLetters) +
       placeholder;
   } else {
-    syllableEl.textContent = state.currentSyllable.question;
+    questionEl.textContent = state.currentSyllable.question;
   }
 }
+
 
 function _applyFreeModeStyles(syllableEl, translationEl) {
   const color = utils.generateColor(state.currentSyllable.question);
@@ -141,9 +149,10 @@ function _applyFreeModeStyles(syllableEl, translationEl) {
   translationEl.style.color = hintColor;
   translationEl.style.textShadow = "0 0 2px currentColor";
 
-  _setSyllableText(syllableEl);
+  _setSyllableText(state.questionElement);
 
   if (state.positionHintEnabled && !state.pronunciationModeEnabled) {
+
     const fullText =
       state.currentSyllable.question + " → " + state.currentSyllable.answer;
     const { x, y } = utils.generatePosition(
@@ -159,12 +168,15 @@ function _applyFreeModeStyles(syllableEl, translationEl) {
   }
 }
 
-function _appendSyllableToDom(syllableEl, translationEl) {
+function _appendSyllableToDom(syllableEl, questionEl, translationEl) {
+  syllableEl.appendChild(questionEl);
   syllableEl.appendChild(translationEl);
   state.currentSyllableElement = syllableEl;
+  state.questionElement = questionEl;
   state.translationElement = translationEl;
   dom.gameArea.appendChild(syllableEl);
 }
+
 
 export function displaySyllable() {
   _setupSyllable();
@@ -173,15 +185,25 @@ export function displaySyllable() {
   _showContextHint();
 
   const syllableEl = _createSyllableElement();
+  const questionEl = _createQuestionElement();
   const translationEl = _createTranslationElement();
+
+  state.questionElement = questionEl;
 
   if (state.evaluativeModeEnabled) {
     _applySrsStyles(syllableEl, translationEl);
+    state.questionElement.textContent = state.currentSyllable.question;
   } else {
     _applyFreeModeStyles(syllableEl, translationEl);
   }
 
-  _appendSyllableToDom(syllableEl, translationEl);
+  _appendSyllableToDom(syllableEl, questionEl, translationEl);
+  
+  if (state.hearingModeEnabled && !state.evaluativeModeEnabled) {
+    questionEl.style.opacity = "0";
+  }
+
+
 
   if (state.pronunciationModeEnabled) {
     if (state.utterance) {
@@ -490,6 +512,11 @@ function _handleFreeModeIncorrect() {
   if (state.translationElement) {
     state.translationElement.textContent = state.currentSyllable.answer;
   }
+  if (state.hearingModeEnabled && state.questionElement) {
+    state.questionElement.style.opacity = "1";
+  }
+
+
   if (state.wrongSoundEnabled) {
     wrongSound.currentTime = 0;
     wrongSound.play();

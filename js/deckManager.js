@@ -59,7 +59,9 @@ export function applyDeckSettingsToGame(settings, onCompleteCallback) {
   state.restartOnWrongEnabled = settings.restartOnWrongEnabled ?? false;
   state.evaluativeModeEnabled = settings.evaluativeModeEnabled ?? false;
   state.pronunciationModeEnabled = settings.pronunciationModeEnabled ?? false;
+  state.hearingModeEnabled = settings.hearingModeEnabled ?? false;
   state.timerModeEnabled = settings.timerModeEnabled ?? false;
+
   state.targetRetention = settings.targetRetention ?? 0.9;
   state.newCardLimit = settings.newCardLimit ?? 20;
   
@@ -166,7 +168,9 @@ export function getDefaultSettings() {
     evaluativeModeEnabled: false,
     evaluativeModeEnabled: false,
     pronunciationModeEnabled: false,
+    hearingModeEnabled: false,
     timerModeEnabled: false,
+
     voiceIndex: "none",
   };
 }
@@ -178,7 +182,9 @@ export function applySettingsToModalUI(settings) {
   dom.colorHintToggle.checked = s.colorHintEnabled;
   dom.positionHintToggle.checked = s.positionHintEnabled;
   dom.restartOnWrongToggle.checked = s.restartOnWrongEnabled;
+  dom.hearingModeToggle.checked = s.hearingModeEnabled || false;
   dom.answerTipInput.value = s.answerTipLetters;
+
   dom.gameSpeedInput.value = s.gameSpeed || 1;
   dom.targetRetentionInput.value = Math.round((s.targetRetention ?? 0.9) * 100);
   dom.newCardLimitInput.value = s.newCardLimit ?? 20;
@@ -227,7 +233,9 @@ function readSettingsFromUI() {
     restartOnWrongEnabled: dom.restartOnWrongToggle.checked,
     evaluativeModeEnabled: dom.modeSrsToggle.checked,
     pronunciationModeEnabled: dom.modePronunciationToggle.checked,
+    hearingModeEnabled: dom.hearingModeToggle.checked,
     timerModeEnabled: dom.modeTimerToggle.checked,
+
     gameSpeed: parseInt(dom.gameSpeedInput.value, 10) || 1,
     voiceIndex: dom.voiceSelect.value,
     targetRetention: parseInt(dom.targetRetentionInput.value) / 100,

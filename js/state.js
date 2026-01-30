@@ -20,7 +20,9 @@ export const state = {
   sessionReviewQueue: [],
   currentSyllable: null,
   currentSyllableElement: null,
+  questionElement: null,
   translationElement: null,
+
   userTyped: "",
   score: 0,
   hintUsed: false,
@@ -44,6 +46,8 @@ export const state = {
   restartOnWrongEnabled: false,
   evaluativeModeEnabled: false,
   pronunciationModeEnabled: false,
+  hearingModeEnabled: false,
+
 
   editModeDeckId: null,
   pendingDeckContent: null,

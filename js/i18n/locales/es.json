@@ -87,6 +87,7 @@
     "GAME_SPEED": "Velocidad del Juego",
     "REPEAT_AUDIO": "Repetir Audio",
     "AUTOPLAY_AUDIO": "Auto-reproducción de Audio",
-    "TARGET_RETENTION_PCT": "Grado de Retención %",
-    "NEW_CARDS_LIMIT": "Límite de Nuevas Cartas"
+    "TARGET_RETENTION_PCT": "% de retención objetivo",
+    "NEW_CARDS_LIMIT": "Límite de cartas nuevas",
+    "HEARING_MODE": "Modo de audición"
 }

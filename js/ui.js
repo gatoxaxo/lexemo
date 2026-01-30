@@ -25,6 +25,8 @@ export const dom = {
   colorHintToggle: document.getElementById("colorHintToggle"),
   positionHintToggle: document.getElementById("positionHintToggle"),
   restartOnWrongToggle: document.getElementById("restartOnWrongToggle"),
+  hearingModeToggle: document.getElementById("hearingModeToggle"),
+
   voiceSelect: document.getElementById("voiceSelect"),
   answerTipInput: document.getElementById("answerTipInput"),
   answerTipDecrement: document.getElementById("answerTipDecrement"),
@@ -217,7 +219,9 @@ export function updateModeSettingsVisibility() {
     toggleSetting(dom.colorHintToggle, true);
     toggleSetting(dom.positionHintToggle, true);
     toggleSetting(dom.restartOnWrongToggle, true);
+    toggleSetting(dom.hearingModeToggle, true);
     toggleSetting(dom.randomToggle, true);
+
   }
 }
 

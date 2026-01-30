@@ -88,5 +88,7 @@
     "REPEAT_AUDIO": "Repeat Audio",
     "AUTOPLAY_AUDIO": "Audio Autoplay",
     "TARGET_RETENTION_PCT": "Target Retention %",
-    "NEW_CARDS_LIMIT": "New Cards Limit"
+    "NEW_CARDS_LIMIT": "New Cards Limit",
+    "HEARING_MODE": "Hearing Mode"
 }
+
