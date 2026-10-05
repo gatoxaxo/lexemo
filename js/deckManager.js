@@ -57,10 +57,12 @@ export function applyDeckSettingsToGame(settings, onCompleteCallback) {
   state.positionHintEnabled = settings.positionHintEnabled ?? true;
   state.answerTipLetters = settings.answerTipLetters ?? 0;
   state.restartOnWrongEnabled = settings.restartOnWrongEnabled ?? false;
-  state.evaluativeModeEnabled = settings.evaluativeModeEnabled ?? false;
-  state.pronunciationModeEnabled = settings.pronunciationModeEnabled ?? false;
   state.hearingModeEnabled = settings.hearingModeEnabled ?? false;
-  state.timerModeEnabled = settings.timerModeEnabled ?? false;
+
+   
+  state.evaluativeModeEnabled = false;
+  state.pronunciationModeEnabled = false;
+  state.timerModeEnabled = false;
 
   state.targetRetention = settings.targetRetention ?? 0.9;
   state.newCardLimit = settings.newCardLimit ?? 20;
@@ -196,11 +198,6 @@ export function applySettingsToModalUI(settings) {
     pMode = false;
   }
 
-  dom.modeSrsToggle.checked = s.evaluativeModeEnabled;
-  dom.modePronunciationToggle.checked = pMode;
-  dom.modeTimerToggle.checked = s.timerModeEnabled;
-  dom.modeFreeToggle.checked = !s.evaluativeModeEnabled && !pMode && !s.timerModeEnabled;
-
   updateModeSettingsVisibility();
 
   setTimeout(() => {
@@ -208,17 +205,6 @@ export function applySettingsToModalUI(settings) {
     if (!dom.voiceSelect.value && dom.voiceSelect.options.length > 0) {
       dom.voiceSelect.value = "none";
     }
-
-    const isVoiceSelected = dom.voiceSelect.value !== "none";
-    dom.modePronunciationToggle.disabled = !isVoiceSelected;
-
-    let pModeDelayed = s.pronunciationModeEnabled;
-    if (!isVoiceSelected) {
-      pModeDelayed = false;
-    }
-
-    dom.modePronunciationToggle.checked = pModeDelayed;
-    dom.modeFreeToggle.checked = !s.evaluativeModeEnabled && !pModeDelayed && !s.timerModeEnabled;
 
     updateModeSettingsVisibility();
   }, 200);
@@ -231,10 +217,10 @@ function readSettingsFromUI() {
     positionHintEnabled: dom.positionHintToggle.checked,
     answerTipLetters: parseInt(dom.answerTipInput.value) || 0,
     restartOnWrongEnabled: dom.restartOnWrongToggle.checked,
-    evaluativeModeEnabled: dom.modeSrsToggle.checked,
-    pronunciationModeEnabled: dom.modePronunciationToggle.checked,
+    evaluativeModeEnabled: false,
+    pronunciationModeEnabled: false,
     hearingModeEnabled: dom.hearingModeToggle.checked,
-    timerModeEnabled: dom.modeTimerToggle.checked,
+    timerModeEnabled: false,
 
     gameSpeed: parseInt(dom.gameSpeedInput.value, 10) || 1,
     voiceIndex: dom.voiceSelect.value,

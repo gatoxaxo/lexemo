@@ -139,15 +139,7 @@ function _initVoiceListeners() {
   speechSynthesis.onvoiceschanged = speech.populateVoices;
   dom.voiceSelect.addEventListener("change", () => {
     speech.selectVoice();
-
-    const isVoiceSelected = dom.voiceSelect.value !== "none";
-    dom.modePronunciationToggle.disabled = !isVoiceSelected;
-
-    if (!isVoiceSelected) {
-      dom.modePronunciationToggle.checked = false;
-      dom.modeFreeToggle.checked = !dom.modeSrsToggle.checked;
-      updateModeSettingsVisibility();
-    }
+    updateModeSettingsVisibility();
   });
 }
 
@@ -332,26 +324,6 @@ function _initDeckSettingsListeners() {
     dom.newCardLimitInput.value = Math.min(100, parseInt(dom.newCardLimitInput.value) + 1);
     handleNewCardLimitChange();
   });
-
-  const modeToggles = [
-    dom.modeFreeToggle,
-    dom.modeSrsToggle,
-    dom.modePronunciationToggle,
-    dom.modeTimerToggle,
-  ];
-  modeToggles.forEach((toggle) =>
-    toggle.addEventListener("click", (e) => {
-      const selectedToggle = e.target;
-      if (!selectedToggle.checked) {
-        selectedToggle.checked = true;
-        return;
-      }
-      modeToggles.forEach((t) => {
-        if (t !== selectedToggle) t.checked = false;
-      });
-      updateModeSettingsVisibility();
-    }),
-  );
 }
 
 function _handleKeyEnter() {

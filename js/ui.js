@@ -75,10 +75,6 @@ export const dom = {
   generalAutoplayToggle: document.getElementById("generalAutoplayToggle"),
   generalSettingsCancelBtn: document.getElementById("generalSettingsCancelBtn"),
   generalSettingsSaveBtn: document.getElementById("generalSettingsSaveBtn"),
-  modeFreeToggle: document.getElementById("modeFreeToggle"),
-  modeSrsToggle: document.getElementById("modeSrsToggle"),
-  modePronunciationToggle: document.getElementById("modePronunciationToggle"),
-  modeTimerToggle: document.getElementById("modeTimerToggle"),
   repeatAudioShortcut: document.getElementById("repeatAudioShortcut"),
   repeatAudioSeparator: document.getElementById("repeatAudioSeparator"),
   gameSpeedInput: document.getElementById("gameSpeedInput"),
@@ -193,9 +189,9 @@ export function renderDeckModal() {
 }
 
 export function updateModeSettingsVisibility() {
-  const isFree = dom.modeFreeToggle.checked;
-  const isTimer = dom.modeTimerToggle.checked;
-  const isSrs = dom.modeSrsToggle.checked;
+  const isFree = true;
+  const isTimer = false;
+  const isSrs = false;
 
   dom.freeModeSettingsDiv.style.display = isFree || isTimer ? "block" : "none";
   dom.srsModeSettingsDiv.style.display = isSrs ? "block" : "none";
@@ -205,6 +201,7 @@ export function updateModeSettingsVisibility() {
 
    
   const toggleSetting = (element, show) => {
+    if (!element) return;
     const label = element.closest("label");
     if (label) label.style.display = show ? "flex" : "none";
   };
