@@ -44,6 +44,8 @@
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
+
+  --ui-scale: 0.9;
 }
 
 body.dark-mode {
@@ -75,6 +77,19 @@ body {
   flex-direction: column;
   transition: all 0.3s ease;
   color-scheme: light;
+}
+
+#app-scale {
+  position: fixed;
+  top: 0;
+  left: 0;
+  transform: scale(var(--ui-scale));
+  transform-origin: top left;
+  width: calc(100vw / var(--ui-scale));
+  height: calc(100vh / var(--ui-scale));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 body.dark-mode {
@@ -692,7 +707,8 @@ body.dark-mode .modal-content select {
 #game-area {
   position: relative;
   width: 100%;
-  height: 100vh;
+  height: 100%;
+  flex: 1 1 auto;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -819,8 +835,8 @@ body.dark-mode .modal-content select {
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
-  height: 50px;
-  padding: 0 20px;
+  min-height: 50px;
+  padding: 0 10px;
   box-sizing: border-box;
   border-radius: var(--radius-lg);
   font-size: 1rem;
@@ -830,8 +846,61 @@ body.dark-mode .modal-content select {
   user-select: none;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0;
+  transition: padding 0.2s ease;
 }
+
+.shortcuts-info-btn {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: var(--input-bg);
+  color: var(--text-main);
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  font-style: italic;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+#shortcutsPanel:hover .shortcuts-info-btn {
+  border-color: var(--secondary);
+  color: var(--secondary);
+}
+
+.shortcuts-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  pointer-events: none;
+  margin-left: 0;
+  transition:
+    max-width 0.25s ease,
+    opacity 0.2s ease,
+    margin-left 0.25s ease;
+}
+
+#shortcutsPanel:hover .shortcuts-content {
+  max-width: 90vw;
+  opacity: 1;
+  pointer-events: auto;
+  margin-left: 12px;
+}
+
+#shortcutsPanel:hover {
+  padding-right: 20px;
+}
+
 .shortcut-item {
   display: flex;
   align-items: center;
@@ -973,8 +1042,8 @@ high {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
    
   background-color: #f0f4f8;
   background-image: 

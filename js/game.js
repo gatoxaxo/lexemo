@@ -241,8 +241,11 @@ function _renderShapeField(syllableEl, questionEl, translationEl) {
     centerX = state.shapeFieldX + width / 2;
     centerY = state.shapeFieldY + height / 2;
   } else {
-    centerX = window.innerWidth / 2;
-    centerY = window.innerHeight / 2;
+    const wrap = document.getElementById("app-scale");
+    const vw = wrap && wrap.offsetWidth ? wrap.offsetWidth : window.innerWidth;
+    const vh = wrap && wrap.offsetHeight ? wrap.offsetHeight : window.innerHeight;
+    centerX = vw / 2;
+    centerY = vh / 2;
   }
 
   syllableEl.style.width = width + "px";

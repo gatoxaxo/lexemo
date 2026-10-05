@@ -272,8 +272,10 @@ export function generatePosition(str, seedStr = null) {
 
   const { elWidth, elHeight } = _getElementDimensions(str);
 
-  const maxX = window.innerWidth - marginRight - elWidth;
-  const maxY = window.innerHeight - marginBottom - elHeight;
+  const { width: viewW, height: viewH } = getLayoutViewportSize();
+
+  const maxX = viewW - marginRight - elWidth;
+  const maxY = viewH - marginBottom - elHeight;
   const minX = marginLeft;
   const minY = marginTop;
 
@@ -287,6 +289,14 @@ export function generatePosition(str, seedStr = null) {
   y = Math.min(Math.max(y, minY), maxY);
 
   return { x, y };
+}
+
+export function getLayoutViewportSize() {
+  const scaleWrap = document.getElementById("app-scale");
+  if (scaleWrap && scaleWrap.offsetWidth > 0 && scaleWrap.offsetHeight > 0) {
+    return { width: scaleWrap.offsetWidth, height: scaleWrap.offsetHeight };
+  }
+  return { width: window.innerWidth, height: window.innerHeight };
 }
 
 export function shuffle(list) {

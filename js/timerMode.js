@@ -7,8 +7,8 @@ import * as utils from "./utils.js";
  
 const SPAWN_INTERVAL_MS = 2000;  
 const PLANE_X = 100;  
-const GAME_WIDTH = window.innerWidth;
-const GAME_HEIGHT = window.innerHeight;
+const GAME_WIDTH = () => utils.getLayoutViewportSize().width;
+const GAME_HEIGHT = () => utils.getLayoutViewportSize().height;
 const WORD_SPEED_BASE = 1.5;
 const PROJECTILE_SPEED = 15;
 
@@ -95,8 +95,8 @@ class ExplosionParticle {
 
 class WindParticle {
   constructor() {
-    this.x = GAME_WIDTH + Math.random() * 100;
-    this.y = Math.random() * GAME_HEIGHT;
+    this.x = GAME_WIDTH() + Math.random() * 100;
+    this.y = Math.random() * GAME_HEIGHT();
     this.speed = 15 + Math.random() * 10;
     this.length = 20 + Math.random() * 30;
     this.element = document.createElement("div");
@@ -156,7 +156,7 @@ class TrailParticle {
 class Plane {
   constructor(element) {
     this.element = element;
-    this.y = GAME_HEIGHT / 2;
+    this.y = GAME_HEIGHT() / 2;
     this.targetY = this.y;
     this.width = 60;
     this.height = 40;
@@ -207,11 +207,11 @@ class FlyingWord {
   constructor(syllable, id) {
     this.syllable = syllable;
     this.id = id;
-    this.x = GAME_WIDTH + 100;  
+    this.x = GAME_WIDTH() + 100;  
      
     const safeTop = 120;
     const safeBottom = 120;
-    const safeHeight = GAME_HEIGHT - safeTop - safeBottom;
+    const safeHeight = GAME_HEIGHT() - safeTop - safeBottom;
     this.y = Math.random() * safeHeight + safeTop; 
     
     this.speed = WORD_SPEED_BASE;  
@@ -642,7 +642,7 @@ export class TimerMode {
              
             const safeTop = 120;
             const safeBottom = 120;
-            randomY = Math.max(safeTop, Math.min(GAME_HEIGHT - safeBottom, randomY));
+            randomY = Math.max(safeTop, Math.min(GAME_HEIGHT() - safeBottom, randomY));
             
             this.plane.setTargetY(randomY);
             this.lastRandomMoveTime = now;

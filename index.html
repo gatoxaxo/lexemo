@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <div id="app-scale">
     <div id="customAlertModal" class="modal">
       <div class="modal-content">
         <h1 class="modal-title secondary" data-i18n="WARNING"></h1>
@@ -467,26 +468,36 @@
     <div id="timer-mode-container" style="display: none;"></div>
 
 
-    <div id="shortcutsPanel">
-      <span id="repeatAudioShortcut" class="shortcut-item">
-        <span class="shortcut-label" data-i18n="REPEAT_AUDIO">Repeat Audio</span>:
-        <span class="shortcut-inst"><kbd>Shift</kbd></span>
-      </span>
-      <span id="repeatAudioSeparator" class="shortcut-separator">|</span>
-      <span id="editCardShortcut" class="shortcut-item">
-        <span class="shortcut-label" data-i18n="EDIT_CARD">Edit Card</span>:
-        <span class="shortcut-inst"><kbd>Alt</kbd></span>
-      </span>
-      <span id="editCardSeparator" class="shortcut-separator">|</span>
-      <span id="deleteCardShortcut" class="shortcut-item">
-        <span class="shortcut-label" data-i18n="DELETE_CARD">Delete Card</span>:
-        <span class="shortcut-inst"><kbd>Del</kbd></span>
-      </span>
-      <span id="levelRangeSeparator" class="shortcut-separator">|</span>
-      <span id="levelRangeShortcut" class="shortcut-item">
-        <span class="shortcut-label" data-i18n="LEVEL_RANGE">Level Range</span>:
-        <span class="shortcut-inst" data-i18n="LEVEL_RANGE_INSTRUCTION">Hold <kbd>↑</kbd> & type level range (e.g. 5 or 1-5)</span>
-      </span>
+    <div id="shortcutsPanel" class="shortcuts-panel">
+      <button
+        id="shortcutsInfoBtn"
+        class="shortcuts-info-btn"
+        type="button"
+        aria-label="Keyboard shortcuts"
+      >
+        i
+      </button>
+      <div id="shortcutsContent" class="shortcuts-content">
+        <span id="repeatAudioShortcut" class="shortcut-item">
+          <span class="shortcut-label" data-i18n="REPEAT_AUDIO">Repeat Audio</span>:
+          <span class="shortcut-inst"><kbd>Shift</kbd></span>
+        </span>
+        <span id="repeatAudioSeparator" class="shortcut-separator">|</span>
+        <span id="editCardShortcut" class="shortcut-item">
+          <span class="shortcut-label" data-i18n="EDIT_CARD">Edit Card</span>:
+          <span class="shortcut-inst"><kbd>Alt</kbd></span>
+        </span>
+        <span id="editCardSeparator" class="shortcut-separator">|</span>
+        <span id="deleteCardShortcut" class="shortcut-item">
+          <span class="shortcut-label" data-i18n="DELETE_CARD">Delete Card</span>:
+          <span class="shortcut-inst"><kbd>Del</kbd></span>
+        </span>
+        <span id="levelRangeSeparator" class="shortcut-separator">|</span>
+        <span id="levelRangeShortcut" class="shortcut-item">
+          <span class="shortcut-label" data-i18n="LEVEL_RANGE">Level Range</span>:
+          <span class="shortcut-inst" data-i18n="LEVEL_RANGE_INSTRUCTION">Hold <kbd>↑</kbd> & type level range (e.g. 5 or 1-5)</span>
+        </span>
+      </div>
     </div>
 
     <div id="contextHintBox">
@@ -497,6 +508,7 @@
     </div>
 
     <input type="file" id="fileInput" accept=".json" class="hidden" />
+    </div>
 
     <script type="module" src="js/i18n/i18n.js"></script>
     <script type="module" src="js/main.js"></script>
