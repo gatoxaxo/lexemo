@@ -193,7 +193,7 @@ export function updateModeSettingsVisibility() {
   const isTimer = false;
   const isSrs = false;
 
-  dom.freeModeSettingsDiv.style.display = isFree || isTimer ? "block" : "none";
+  dom.freeModeSettingsDiv.style.display = isFree || isTimer ? "grid" : "none";
   dom.srsModeSettingsDiv.style.display = isSrs ? "block" : "none";
   
   const gameSpeedGroup = document.getElementById("gameSpeedGroup");
