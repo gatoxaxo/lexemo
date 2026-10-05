@@ -745,7 +745,7 @@ body.dark-mode .modal-content select {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
-  z-index: 10001;
+  z-index: 9998;
   pointer-events: none;
   user-select: none;
 }
