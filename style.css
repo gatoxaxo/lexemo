@@ -714,6 +714,66 @@ body.dark-mode .modal-content select {
   text-shadow: 0 0 2px currentColor;
 }
 
+.question-hud {
+  position: fixed;
+  top: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 22px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  z-index: 10001;
+  pointer-events: none;
+  user-select: none;
+}
+
+.question-hud-shape {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  line-height: 0;
+}
+
+.question-hud-text {
+  font-size: 30px;
+  font-weight: bold;
+  font-family: sans-serif;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 2px currentColor;
+  white-space: nowrap;
+}
+
+.shape-outline {
+  overflow: visible;
+  filter: drop-shadow(0 0 2px currentColor);
+}
+
+.shape-field {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+}
+
+.shape-field .typed-text {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px;
+  font-weight: bold;
+  font-family: sans-serif;
+  white-space: nowrap;
+  text-shadow: 0 0 2px currentColor;
+}
+
 .translation {
   display: block;
   font-size: 24px;

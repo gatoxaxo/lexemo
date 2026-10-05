@@ -98,6 +98,13 @@ function _createSyllableElement() {
   return syllableEl;
 }
 
+function _createShapeFieldElement() {
+  const fieldEl = document.createElement("div");
+  fieldEl.classList.add("shape-field");
+  fieldEl.style.position = "absolute";
+  return fieldEl;
+}
+
 function _createTranslationElement() {
   const translationEl = document.createElement("span");
   translationEl.classList.add("translation");
@@ -137,6 +144,35 @@ function _setSyllableText(questionEl) {
   }
 }
 
+function _updateQuestionHud() {
+  if (!dom.questionHud || !dom.questionHudText || !dom.questionHudShape) return;
+
+  const color = utils.generateColor(state.currentSyllable.question);
+  const hintColor =
+    state.colorHintEnabled && !state.pronunciationModeEnabled
+      ? color
+      : "inherit";
+
+  dom.questionHudText.textContent = state.currentSyllable.question;
+  dom.questionHudText.style.color = hintColor;
+  dom.questionHudShape.innerHTML = "";
+  dom.questionHudShape.style.color = hintColor;
+
+  const mini = utils.buildShapeSvg(state.currentSyllable.question, 34, 34, {
+    strokeWidth: 3,
+    color: hintColor,
+    padding: 5,
+  });
+  dom.questionHudShape.appendChild(mini);
+  dom.questionHud.style.display = "flex";
+}
+
+function _hideQuestionHud() {
+  if (dom.questionHud) {
+    dom.questionHud.style.display = "none";
+    if (dom.questionHudShape) dom.questionHudShape.innerHTML = "";
+  }
+}
 
 function _applyFreeModeStyles(syllableEl, translationEl) {
   const color = utils.generateColor(state.currentSyllable.question);
@@ -144,33 +180,117 @@ function _applyFreeModeStyles(syllableEl, translationEl) {
     state.colorHintEnabled && !state.pronunciationModeEnabled
       ? color
       : "inherit";
+
   syllableEl.style.color = hintColor;
   syllableEl.style.textShadow = "0 0 2px currentColor";
+
+  translationEl.classList.add("typed-text");
   translationEl.style.color = hintColor;
   translationEl.style.textShadow = "0 0 2px currentColor";
 
-  _setSyllableText(state.questionElement);
+  const hasPositionHint =
+    state.positionHintEnabled && !state.pronunciationModeEnabled;
 
-  if (state.positionHintEnabled && !state.pronunciationModeEnabled) {
+  if (state.answerTipLetters > 0 && !state.pronunciationModeEnabled) {
+    state.questionElement.textContent =
+      state.currentSyllable.answer.substring(0, state.answerTipLetters) +
+      (state.currentSyllable.answer.length - state.answerTipLetters > 0
+        ? "~"
+        : "");
+  } else {
+    state.questionElement.textContent = "";
+  }
 
-    const fullText =
-      state.currentSyllable.question + " → " + state.currentSyllable.answer;
+  const probeText = state.currentSyllable.answer || state.currentSyllable.question;
+  const shapeSize = _measureShapeBox(probeText);
+  state.shapeSize = shapeSize;
+
+  if (hasPositionHint) {
     const { x, y } = utils.generatePosition(
-      fullText,
+      state.currentSyllable.answer,
       state.currentSyllable.question,
     );
-    syllableEl.style.left = x + "px";
-    syllableEl.style.top = y + "px";
+    state.shapeFieldX = x;
+    state.shapeFieldY = y;
   } else {
-    syllableEl.style.left = "50%";
-    syllableEl.style.top = "50%";
-    syllableEl.style.transform = "translate(-50%, -50%)";
+    state.shapeFieldX = null;
+    state.shapeFieldY = null;
   }
 }
 
+function _measureShapeBox(text) {
+  const el = document.createElement("span");
+  el.className = "syllable";
+  el.style.position = "absolute";
+  el.style.visibility = "hidden";
+  el.style.whiteSpace = "nowrap";
+  el.textContent = text;
+  dom.gameArea.appendChild(el);
+  const width = Math.max(70, el.offsetWidth + 40);
+  const height = Math.max(70, el.offsetHeight + 40);
+  el.remove();
+  return { width, height };
+}
+
+function _renderShapeField(syllableEl, questionEl, translationEl) {
+  const width = state.shapeSize.width;
+  const height = state.shapeSize.height;
+
+  let centerX, centerY;
+  if (state.shapeFieldX != null) {
+    centerX = state.shapeFieldX + width / 2;
+    centerY = state.shapeFieldY + height / 2;
+  } else {
+    centerX = window.innerWidth / 2;
+    centerY = window.innerHeight / 2;
+  }
+
+  syllableEl.style.width = width + "px";
+  syllableEl.style.height = height + "px";
+  syllableEl.style.left = centerX + "px";
+  syllableEl.style.top = centerY + "px";
+  syllableEl.style.transform = "translate(-50%, -50%)";
+
+  questionEl.style.position = "absolute";
+  questionEl.style.top = "50%";
+  questionEl.style.left = "50%";
+  questionEl.style.transform = "translate(-50%, -50%)";
+  questionEl.style.display = "block";
+  questionEl.style.textAlign = "center";
+  questionEl.style.whiteSpace = "nowrap";
+
+  translationEl.style.position = "absolute";
+  translationEl.style.top = height + "px";
+  translationEl.style.left = "50%";
+  translationEl.style.transform = "translateX(-50%)";
+  translationEl.style.whiteSpace = "nowrap";
+}
+
 function _appendSyllableToDom(syllableEl, questionEl, translationEl) {
+  if (!state.evaluativeModeEnabled) {
+    const hintColor =
+      state.colorHintEnabled && !state.pronunciationModeEnabled
+        ? utils.generateColor(state.currentSyllable.question)
+        : "inherit";
+
+    const svg = utils.buildShapeSvg(
+      state.currentSyllable.question,
+      state.shapeSize.width,
+      state.shapeSize.height,
+      {
+        strokeWidth: 4,
+        color: hintColor,
+        padding: 10,
+      },
+    );
+    svg.style.position = "absolute";
+    svg.style.left = "0";
+    svg.style.top = "0";
+    syllableEl.appendChild(svg);
+  }
   syllableEl.appendChild(questionEl);
   syllableEl.appendChild(translationEl);
+
   state.currentSyllableElement = syllableEl;
   state.questionElement = questionEl;
   state.translationElement = translationEl;
@@ -184,17 +304,22 @@ export function displaySyllable() {
 
   _showContextHint();
 
-  const syllableEl = _createSyllableElement();
+  const syllableEl = state.evaluativeModeEnabled
+    ? _createSyllableElement()
+    : _createShapeFieldElement();
   const questionEl = _createQuestionElement();
   const translationEl = _createTranslationElement();
 
   state.questionElement = questionEl;
 
   if (state.evaluativeModeEnabled) {
+    _hideQuestionHud();
     _applySrsStyles(syllableEl, translationEl);
     state.questionElement.textContent = state.currentSyllable.question;
   } else {
+    _updateQuestionHud();
     _applyFreeModeStyles(syllableEl, translationEl);
+    _renderShapeField(syllableEl, questionEl, translationEl);
   }
 
   _appendSyllableToDom(syllableEl, questionEl, translationEl);
@@ -231,6 +356,7 @@ function _cleanupGameUI() {
   if (state.currentSyllableElement) state.currentSyllableElement.remove();
   if (state.translationElement) state.translationElement.remove();
   dom.contextHintBox.style.display = "none";
+  _hideQuestionHud();
 }
 
 function _initializeDeckMode() {

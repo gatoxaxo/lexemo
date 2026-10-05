@@ -22,6 +22,9 @@ export const state = {
   currentSyllableElement: null,
   questionElement: null,
   translationElement: null,
+  shapeSize: { width: 90, height: 90 },
+  shapeFieldX: null,
+  shapeFieldY: null,
 
   userTyped: "",
   score: 0,

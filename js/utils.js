@@ -118,10 +118,155 @@ function _getElementDimensions(str) {
   return { elWidth, elHeight };
 }
 
+function _hashStream(seed, count) {
+  let h = hashCode(String(seed));
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    h ^= h << 13;
+    h ^= h >>> 17;
+    h ^= h << 5;
+    h = h >>> 0;
+    out.push(h);
+  }
+  return out;
+}
+
+function _randRange(stream, index, min, max) {
+  const span = max - min;
+  return min + ((stream[index] % 100000) / 100000) * span;
+}
+
+function _buildPoints(stream, shapeKind, sides, radius, rot) {
+  const points = [];
+  const cx = 0;
+  const cy = 0;
+
+  if (shapeKind === 0) {
+    for (let i = 0; i < sides; i++) {
+      const angle =
+        rot + (i * Math.PI * 2) / sides + _randRange(stream, 10 + i, -0.28, 0.28);
+      const r = radius * _randRange(stream, 20 + i, 0.62, 1.0);
+      points.push([cx + Math.cos(angle) * r, cy + Math.sin(angle) * r]);
+    }
+  } else if (shapeKind === 1) {
+    const spikes = sides < 3 ? 5 : sides;
+    for (let i = 0; i < spikes * 2; i++) {
+      const angle = rot + (i * Math.PI) / spikes;
+      const r =
+        i % 2 === 0
+          ? radius * _randRange(stream, 20 + i, 0.85, 1.0)
+          : radius * _randRange(stream, 40 + i, 0.32, 0.52);
+      points.push([cx + Math.cos(angle) * r, cy + Math.sin(angle) * r]);
+    }
+  } else if (shapeKind === 2) {
+    const blobSides = sides < 4 ? 6 : sides + 3;
+    for (let i = 0; i < blobSides; i++) {
+      const baseAngle = rot + (i * Math.PI * 2) / blobSides;
+      const wobble = _randRange(stream, 60 + i, -0.35, 0.35);
+      const r = radius * _randRange(stream, 80 + i, 0.55, 1.0);
+      points.push([
+        cx + Math.cos(baseAngle + wobble) * r,
+        cy + Math.sin(baseAngle + wobble) * r,
+      ]);
+    }
+  } else {
+    const cross = Math.max(3, sides - 1);
+    for (let i = 0; i < cross; i++) {
+      const angle = rot + (i * Math.PI * 2) / cross;
+      const r = radius * _randRange(stream, 100 + i, 0.7, 1.0);
+      const inner = radius * _randRange(stream, 120 + i, 0.25, 0.45);
+      points.push([cx + Math.cos(angle) * r, cy + Math.sin(angle) * r]);
+      points.push([
+        cx + Math.cos(angle + Math.PI / cross) * inner,
+        cy + Math.sin(angle + Math.PI / cross) * inner,
+      ]);
+    }
+  }
+  return points;
+}
+
+export function generateShape(str, seedStr = null) {
+  const seed = seedStr || str;
+  const stream = _hashStream(seed, 200);
+  const shapeKind = stream[0] % 4;
+  const sides = 3 + (stream[1] % 6);
+  const rot = _randRange(stream, 2, 0, Math.PI * 2);
+  const jitter = shapeKind === 2 ? 0.18 : 0.28;
+  return { seed: String(seed), shapeKind, sides, rot, jitter, stream };
+}
+
+function _shapePointsNormalized(shape, width, height, padding) {
+  const usableW = Math.max(1, width - padding * 2);
+  const usableH = Math.max(1, height - padding * 2);
+  const radius = Math.min(usableW, usableH) / 2;
+  const raw = _buildPoints(
+    shape.stream,
+    shape.shapeKind,
+    shape.sides,
+    radius,
+    shape.rot,
+  );
+
+  let minX = Infinity,
+    maxX = -Infinity,
+    minY = Infinity,
+    maxY = -Infinity;
+  for (const [px, py] of raw) {
+    if (px < minX) minX = px;
+    if (px > maxX) maxX = px;
+    if (py < minY) minY = py;
+    if (py > maxY) maxY = py;
+  }
+
+  const rawW = Math.max(1, maxX - minX);
+  const rawH = Math.max(1, maxY - minY);
+  const scale = Math.min(usableW / rawW, usableH / rawH);
+  const midX = (minX + maxX) / 2;
+  const midY = (minY + maxY) / 2;
+
+  return raw.map(([px, py]) => [
+    width / 2 + (px - midX) * scale,
+    height / 2 + (py - midY) * scale,
+  ]);
+}
+
+export function buildShapeSvg(str, width, height, options = {}) {
+  const seed = options.seedStr || str;
+  const shape = generateShape(str, seed);
+  const padding = options.padding ?? 8;
+  const strokeWidth = options.strokeWidth ?? 3;
+  const color = options.color || "currentColor";
+  const points = _shapePointsNormalized(shape, width, height, padding);
+
+  const d =
+    points
+      .map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`)
+      .join(" ") + " Z";
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", String(width));
+  svg.setAttribute("height", String(height));
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("aria-hidden", "true");
+  svg.classList.add("shape-outline");
+
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", d);
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", color);
+  path.setAttribute("stroke-width", String(strokeWidth));
+  path.setAttribute("stroke-linejoin", "round");
+  path.setAttribute("stroke-linecap", "round");
+
+  svg.appendChild(path);
+  return svg;
+}
+
 export function generatePosition(str, seedStr = null) {
   const hash = hashCode(seedStr || str);
-  const marginTop = 120;  
-  const marginBottom = 180;  
+  const marginTop = 180;  
+  const marginBottom = 260;  
   const marginLeft = 100;
   const marginRight = 100;
 
