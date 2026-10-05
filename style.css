@@ -479,6 +479,10 @@ body.dark-mode .modal-content select {
 .deck-action-btn.stats:hover svg {
   fill: var(--info);
 }
+/* Temporariamente desativado: botão de ver SRS/estatísticas ao lado do deck. */
+.deck-action-btn.stats {
+  display: none;
+}
 .deck-action-btn.delete:hover svg {
   fill: var(--danger);
 }
