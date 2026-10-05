@@ -759,10 +759,10 @@ body.dark-mode .modal-content select {
 }
 
 .question-hud-text {
-  font-size: 30px;
-  font-weight: bold;
-  font-family: sans-serif;
-  letter-spacing: 0.5px;
+  font-size: 22px;
+  font-weight: 600;
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: 0.6px;
   text-shadow: 0 0 2px currentColor;
   white-space: nowrap;
 }
