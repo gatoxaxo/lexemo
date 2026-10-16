@@ -89,5 +89,6 @@
     "AUTOPLAY_AUDIO": "Auto-play de Áudio",
     "TARGET_RETENTION_PCT": "% de retenção alvo",
     "NEW_CARDS_LIMIT": "Limite de novos cards",
-    "HEARING_MODE": "Modo audição"
+    "HEARING_MODE": "Modo audição",
+    "REVERSE_MODE": "Modo reverso"
 }

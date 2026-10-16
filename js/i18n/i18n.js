@@ -52,6 +52,7 @@ export function detectBrowserLanguage() {
   const lang = navigator.language || navigator.userLanguage;
   if (lang.startsWith("pt")) return "pt-BR";
   if (lang.startsWith("es")) return "es";
+  if (lang.startsWith("ru")) return "ru";
   return "en";
 }
 

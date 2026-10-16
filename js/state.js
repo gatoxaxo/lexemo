@@ -47,6 +47,12 @@ export const state = {
   evaluativeModeEnabled: false,
   pronunciationModeEnabled: false,
   hearingModeEnabled: false,
+  // Reverse mode: o ANSWER vira o estimulo e o jogador digita o QUESTION.
+  // So vale no free mode (SRS fica intacto).
+  reverseModeEnabled: false,
+  // Hold-to-talk: reconhecimento de voz disparado por mouse down na tela.
+  // Preenche o mesmo buffer do teclado (state.userTyped).
+  holdToTalkActive: false,
 
 
   editModeDeckId: null,

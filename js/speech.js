@@ -163,6 +163,86 @@ export function stopRecognition() {
   }
 }
 
+// --- Hold-to-talk (free mode) ---------------------------------------------
+// Segurar o mouse na tela transcreve a fala para o MESMO buffer do teclado
+// (state.userTyped). Se nao houver nada segurando, o teclado digita normal
+// (permite teclados de outros alfabetos). Nao avalia acerto: quem decide e o
+// Enter (handleFreeModeEnter).
+
+function _ensureHoldRecognition() {
+  if (state.recognition) return true;
+  const SpeechRecognition = _checkSpeechRecognitionSupport();
+  if (!SpeechRecognition) return false;
+  state.recognition = new SpeechRecognition();
+  state.recognition.continuous = false;
+  state.recognition.interimResults = true;
+  state.recognition.onresult = _handleHoldRecognitionResult;
+  state.recognition.onend = _handleHoldRecognitionEnd;
+  state.recognition.onerror = _handleHoldRecognitionError;
+  return true;
+}
+
+function _handleHoldRecognitionResult(event) {
+  if (!state.holdToTalkActive) return;
+
+  let text = "";
+  for (let i = 0; i < event.results.length; ++i) {
+    text += event.results[i][0].transcript;
+  }
+  if (!text.trim()) return;
+
+  state.userTyped = text.trim().toLowerCase();
+  if (state.translationElement) {
+    state.translationElement.textContent = state.userTyped;
+  }
+}
+
+function _handleHoldRecognitionEnd() {
+  state.isRecognizing = false;
+  // Segurou, soltou e o motor ainda esta subindo (start e assincrono):
+  // precisa religar para nao perder o ditado.
+  if (state.holdToTalkActive) {
+    startHoldRecognition();
+  }
+}
+
+function _handleHoldRecognitionError(event) {
+  // "no-speech"/"aborted" sao normais quando o usuario solta o mouse.
+  if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+    console.error("Hold-to-talk: microfone negado.");
+  }
+  state.isRecognizing = false;
+}
+
+export function startHoldRecognition() {
+  if (!_ensureHoldRecognition()) return;
+  if (!state.currentSyllable) return;
+  state.isSpeechUnlocked = true;
+
+  try {
+    state.recognition.lang = state.selectedVoice
+      ? state.selectedVoice.lang
+      : "en-US";
+    state.recognition.start();
+    state.isRecognizing = true;
+  } catch (e) {
+    // InvalidStateError = ja iniciado; os outros merecem log.
+    if (e.name !== "InvalidStateError") {
+      console.error("Hold-to-talk: erro ao iniciar.", e);
+    }
+  }
+}
+
+export function stopHoldRecognition() {
+  if (!state.recognition) return;
+  try {
+    state.recognition.stop();
+  } catch (e) {
+    console.error("Hold-to-talk: erro ao parar.", e);
+  }
+  state.isRecognizing = false;
+}
+
 function _setVoiceFromSelection() {
   if (dom.voiceSelect.value === "none") {
     state.selectedVoice = null;

@@ -365,6 +365,48 @@ function _handleKeyEnter() {
   }
 }
 
+// --- Hold-to-talk ---------------------------------------------------------
+// Segurar o mouse esquerdo na tela liga o microfone e o que for falado vira o
+// texto digitado. Soltar encerra. O teclado continua funcionando normalmente
+// quando ninguem esta segurando (necessario para teclados de outros alfabetos).
+
+// Enquanto segura, a tela entra nesta classe para o arrasto nao selecionar
+// texto da interface.
+const HOLD_NEUTRAL_CLICK_CLASS = "no-select";
+
+function _canHoldToTalk() {
+  return (
+    !state.evaluativeModeEnabled &&
+    !state.pronunciationModeEnabled &&
+    !state.timerModeEnabled &&
+    !!state.currentSyllable
+  );
+}
+
+function _handleHoldStart(e) {
+  if (isModalOpen() || e.button !== 0) return;
+  if (!_canHoldToTalk()) return;
+  // e.target pode nao ser um Element (ex.: o proprio document), e nesse caso
+  // nao existe closest. Por isso a checagem de tipo.
+  const target = e.target;
+  if (target instanceof Element && target.closest("button, a, input, select, textarea, label")) {
+    return;
+  }
+
+  e.preventDefault();
+  state.holdToTalkActive = true;
+  document.body.classList.add(HOLD_NEUTRAL_CLICK_CLASS);
+  speech.stopHoldRecognition();
+  speech.startHoldRecognition();
+}
+
+function _handleHoldEnd() {
+  if (!state.holdToTalkActive) return;
+  state.holdToTalkActive = false;
+  document.body.classList.remove(HOLD_NEUTRAL_CLICK_CLASS);
+  speech.stopHoldRecognition();
+}
+
 function _handleKeyPress(e) {
   if (isModalOpen()) return;
   if (state.pronunciationModeEnabled) return;
@@ -435,6 +477,11 @@ function _initGameListeners() {
   document.addEventListener("keydown", _handleKeyDown);
   document.addEventListener("keyup", _handleKeyUp);
   document.addEventListener("keypress", _handleKeyPress);
+  document.addEventListener("mousedown", _handleHoldStart);
+  document.addEventListener("mouseup", _handleHoldEnd);
+  // Se o botao for solto fora da janela (ou o foco se perde), encerra o ditado
+  // para nao ficar com o microfone aberto.
+  window.addEventListener("blur", _handleHoldEnd);
   document.addEventListener(
     "pronunciationSuccess",
     game.handleCorrectPronunciation,

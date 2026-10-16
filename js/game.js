@@ -61,6 +61,9 @@ function _setupSyllable() {
   state.lastKeyTime = 0;
   state.backspaceCount = 0;
   state.maxPause = 0;
+  // Trocar de card encerra o ditado pendente (o texto era do card anterior).
+  state.holdToTalkActive = false;
+  document.body.classList.remove("no-select");
   if (state.currentSyllableElement) state.currentSyllableElement.remove();
 }
 
@@ -124,17 +127,35 @@ function _applySrsStyles(syllableEl, translationEl) {
 }
 
 function _setSyllableText(questionEl) {
-  let placeholder =
-    state.currentSyllable.answer.length - state.answerTipLetters > 0 ? "~" : "";
+  // Modo reverso: o ESTIMULO passa a ser o answer do card.
+  const prompt = state.reverseModeEnabled
+    ? state.currentSyllable.answer
+    : state.currentSyllable.question;
+  const target = _getTargetText();
+
+  let placeholder = target.length - state.answerTipLetters > 0 ? "~" : "";
   if (state.answerTipLetters > 0 && !state.pronunciationModeEnabled) {
     questionEl.textContent =
-      state.currentSyllable.question +
-      " → " +
-      state.currentSyllable.answer.substring(0, state.answerTipLetters) +
-      placeholder;
+      prompt + " → " + target.substring(0, state.answerTipLetters) + placeholder;
   } else {
-    questionEl.textContent = state.currentSyllable.question;
+    questionEl.textContent = prompt;
   }
+}
+
+// Alvo = o que o jogador deve digitar. Sem reverse: o answer (traducao).
+// Com reverse: o question (o termo no idioma estudado).
+function _getTargetText() {
+  return state.reverseModeEnabled
+    ? state.currentSyllable.question
+    : state.currentSyllable.answer;
+}
+
+// Comparacao de acerto. O modo reverso aceita as duas direcoes para nao
+// punir quando question e answer sao iguais (decks sem traducao, ver notas).
+function _isTargetMatch(typed) {
+  const target = _getTargetText();
+  if (typed === target) return true;
+  return state.reverseModeEnabled && typed === state.currentSyllable.answer;
 }
 
 
@@ -153,11 +174,14 @@ function _applyFreeModeStyles(syllableEl, translationEl) {
 
   if (state.positionHintEnabled && !state.pronunciationModeEnabled) {
 
-    const fullText =
-      state.currentSyllable.question + " → " + state.currentSyllable.answer;
+    const fullText = state.reverseModeEnabled
+      ? state.currentSyllable.answer + " → " + state.currentSyllable.question
+      : state.currentSyllable.question + " → " + state.currentSyllable.answer;
     const { x, y } = utils.generatePosition(
       fullText,
-      state.currentSyllable.question,
+      state.reverseModeEnabled
+        ? state.currentSyllable.answer
+        : state.currentSyllable.question,
     );
     syllableEl.style.left = x + "px";
     syllableEl.style.top = y + "px";
@@ -196,10 +220,16 @@ export function displaySyllable() {
   } else {
     _applyFreeModeStyles(syllableEl, translationEl);
   }
-
   _appendSyllableToDom(syllableEl, questionEl, translationEl);
   
-  if (state.hearingModeEnabled && !state.evaluativeModeEnabled) {
+  if (state.hearingModeEnabled && state.reverseModeEnabled) {
+    // hearing + reverse = ler/som do texto de entrada (o answer) nao faz
+    // sentido: o estimulo auditivo e a traducao, que nao tem audio util.
+    // Por isso o hearing e ignorado quando o reverse esta ligado.
+    console.warn("hearingMode ignorado: incompativel com reverseMode");
+  }
+
+  if (state.hearingModeEnabled && !state.evaluativeModeEnabled && !state.reverseModeEnabled) {
     questionEl.style.opacity = "0";
   }
 
@@ -510,12 +540,8 @@ function _handleFreeModeCorrect() {
 
 function _handleFreeModeIncorrect() {
   if (state.translationElement) {
-    state.translationElement.textContent = state.currentSyllable.answer;
+    state.translationElement.textContent = _getTargetText();
   }
-  if (state.hearingModeEnabled && state.questionElement) {
-    state.questionElement.style.opacity = "1";
-  }
-
 
   if (state.wrongSoundEnabled) {
     wrongSound.currentTime = 0;
@@ -576,7 +602,7 @@ function _deleteCurrentCardLogic() {
 }
 
 export function handleFreeModeEnter() {
-  if (state.userTyped === state.currentSyllable.answer) {
+  if (_isTargetMatch(state.userTyped)) {
     _handleFreeModeCorrect();
   } else {
     _handleFreeModeIncorrect();

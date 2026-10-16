@@ -81,6 +81,15 @@ body.dark-mode {
   color-scheme: dark;
 }
 
+/* Hold-to-talk: enquanto o mouse esta pressionado a tela entra em modo ditado.
+   A selecao de texto e suprimida para o arrasto nao "pintar" a interface e o
+   cursor muda para indicar que o microfone esta ouvindo. */
+body.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: crosshair;
+}
+
 .modal {
   display: none;
   position: fixed;
