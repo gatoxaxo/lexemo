@@ -47,12 +47,65 @@ function _pickNonRepeatingRandomIndex(group) {
   return randomIndex;
 }
 
+// --- Cobertura de silabas (modo silaba) -----------------------------------
+// No modo silaba a palavra nao sai do grupo quando o jogador acerta UMA
+// silaba: ela fica ate TODAS as silabas terem sido acertadas, dando cobertura
+// completa da palavra. Cada silaba acertada vale 1 ponto.
+//
+// O progresso vive em state.syllableCoverage, mapeado por question (e nao por
+// referencia do objeto) porque o mesmo card aparece em syllableList,
+// currentGroup e sessionReviewQueue como copias diferentes.
+
+function _getPendentes(card) {
+  if (!card) return null;
+  const chave = card.question;
+  if (!state.syllableCoverage[chave]) {
+    // Primeira vez nesta palavra: todas as silabas pendentes.
+    const total = syllables.dividirSilabas(chave).length;
+    state.syllableCoverage[chave] = [];
+    for (let i = 0; i < total; i++) state.syllableCoverage[chave].push(i);
+  }
+  return state.syllableCoverage[chave];
+}
+
+function _marcarSilabaAcertada(card, indice) {
+  const pendentes = _getPendentes(card);
+  if (!pendentes) return;
+  const pos = pendentes.indexOf(indice);
+  if (pos > -1) pendentes.splice(pos, 1);
+}
+
+function _palavraCoberta(card) {
+  const pendentes = _getPendentes(card);
+  return !!pendentes && pendentes.length === 0;
+}
+
+// Escolhe o proximo card do grupo.
+// Modo silaba: prioriza palavras com silabas pendentes e so descarta a palavra
+// quando todas foram acertadas.
+// Modo normal: comportamento antigo (uma passada por card).
+function _pickNextFromGroup() {
+  if (!state.syllableModeEnabled) {
+    const idx = _pickNonRepeatingRandomIndex(state.currentGroup);
+    return { syllable: state.currentGroup[idx], index: idx };
+  }
+
+  // Descarta as palavras ja cobertas.
+  const candidatos = [];
+  for (let i = 0; i < state.currentGroup.length; i++) {
+    if (!_palavraCoberta(state.currentGroup[i])) candidatos.push(i);
+  }
+  if (candidatos.length === 0) return null;
+
+  const idx = candidatos[Math.floor(Math.random() * candidatos.length)];
+  lastPickedIndex = idx;
+  return { syllable: state.currentGroup[idx], index: idx };
+}
+
 function pickRandomSyllable() {
   _ensureGroupHasSyllables();
   if (state.currentGroup.length === 0) return null;
-
-  const randomIndex = _pickNonRepeatingRandomIndex(state.currentGroup);
-  return { syllable: state.currentGroup[randomIndex], index: randomIndex };
+  return _pickNextFromGroup();
 }
 
 function _setupSyllable() {
@@ -76,7 +129,15 @@ function _pickNextCard() {
       return false;
     }
   } else {
-    const picked = pickRandomSyllable();
+    let picked = pickRandomSyllable();
+    // Modo silaba: quando todas as palavras do grupo ja foram cobertas, o
+    // grupo ainda tem itens (eles so saem junto com a ultima silaba), entao
+    // avanca para o proximo grupo em vez de encerrar a partida.
+    if (!picked && state.syllableModeEnabled) {
+      state.currentGroupIndex++;
+      loadGroup(state.currentGroupIndex);
+      picked = pickRandomSyllable();
+    }
     if (!picked) return false;
     state.currentSyllable = picked.syllable;
     state.currentSyllable.pickIndex = picked.index;
@@ -199,8 +260,9 @@ function _isTargetMatch(typed) {
   return state.reverseModeEnabled && typed === state.currentSyllable.answer;
 }
 
-// Sorteia a silaba da rodada. Recalculado a cada card exibido, para a mesma
-// palavra poder cair com destaque diferente em repeticoes.
+// Sorteia a silaba da rodada.
+// Dentre as silabas AINDA PENDENTES da palavra (nunca repete uma ja acertada),
+// o que garante cobertura total antes de a palavra sair do grupo.
 function _setupSyllableRound() {
   state.syllableParts = [];
   state.syllableHighlightIndex = -1;
@@ -208,7 +270,16 @@ function _setupSyllableRound() {
 
   const partes = syllables.dividirSilabas(state.currentSyllable.question);
   state.syllableParts = partes;
-  state.syllableHighlightIndex = syllables.escolherSilaba(partes);
+
+  const pendentes = _getPendentes(state.currentSyllable);
+  const disponiveis = pendentes && pendentes.length > 0
+    ? pendentes
+    : partes.map((_, i) => i);
+  // escolherSilaba devolve um indice DENTRO da lista passada, entao precisa
+  // ser traduzido para o indice da silaba (a lista pendente nao e 0..n-1).
+  const posEscolhida = syllables.escolherSilaba(disponiveis);
+  state.syllableHighlightIndex =
+    posEscolhida >= 0 ? disponiveis[posEscolhida] : -1;
 }
 
 
@@ -311,6 +382,8 @@ function _resetGameState() {
   state.currentSyllable = null;
   state.currentGroupIndex = 0;
   state.currentGroup = [];
+  // Zerar a cobertura para um restart comecar a palavra do inicio.
+  state.syllableCoverage = {};
   srs.resetSessionStats();
 }
 
@@ -434,8 +507,20 @@ function _playCorrectFeedback() {
 
 function _updateScoreAndGroup() {
   state.score++;
+
+  // Modo silaba: a palavra permanece no grupo ate TODAS as silabas serem
+  // acertadas. Cada acerto marca a silaba da rodada; so remove quando nao
+  // sobrar nenhuma pendente.
+  if (state.syllableModeEnabled) {
+    _marcarSilabaAcertada(state.currentSyllable, state.syllableHighlightIndex);
+    if (_palavraCoberta(state.currentSyllable)) {
+      state.currentGroup.splice(state.currentSyllable.pickIndex, 1);
+    }
+  } else {
+    state.currentGroup.splice(state.currentSyllable.pickIndex, 1);
+  }
+
   updateScoreDisplay();
-  state.currentGroup.splice(state.currentSyllable.pickIndex, 1);
 
   if (state.currentGroup.length === 0) {
     state.currentGroupIndex++;
