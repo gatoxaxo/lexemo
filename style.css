@@ -734,15 +734,16 @@ body.dark-mode .modal-content select {
   text-shadow: 0 0 2px currentColor;
 }
 
-/* Modo silaba: a silaba sorteada e sempre MAIS CLARA que o resto da palavra
-   para o jogador saber qual pedaco romanizacar.
+/* Modo silaba: a silaba sorteada precisa se distinguir do resto da palavra.
    - com dica de cor: mistura a PROPRIA cor da palavra com branco. Isso sobe a
      luminosidade mantendo matiz e saturacao, ao contrario de filter:brightness,
      que lavava a cor (o tom ficava desbotado/palido).
-   - sem dica de cor: mistura a cor BASE do texto com branco. Assim o destaque
-     acompanha o tema (claro/escuro) em vez de ser um cinza fixo:
-       escuro -> texto quase branco, destaque branco puro (bem sutil)
-       claro  -> texto quase preto, destaque cinza medio (legivel) */
+   - sem dica de cor: ESMAECE de leve o proprio texto na direcao do FUNDO do
+     tema. No escuro o branco fica um pouco "sujo", no claro o preto fica um
+     pouco cinza. A ideia e ser quase imperceptivel: a silaba continua legivel
+     como parte da palavra, so um tom fora do resto.
+     Usa --bg-main (que ja muda com o tema), entao vale para os dois sem
+     precisar de regra separada para .dark-mode. */
 .syllable-highlight {
   font-weight: bold;
 }
@@ -752,7 +753,7 @@ body.dark-mode .modal-content select {
 }
 
 .syllable-highlight-plain {
-  color: color-mix(in srgb, var(--text-main) 55%, white);
+  color: color-mix(in srgb, var(--text-main) 85%, var(--bg-main));
   text-shadow: 0 0 2px currentColor;
 }
 
