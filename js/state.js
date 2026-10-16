@@ -49,8 +49,12 @@ export const state = {
   hearingModeEnabled: false,
   // Reverse mode: o ANSWER vira o estimulo e o jogador digita o QUESTION.
   // So vale no free mode (SRS fica intacto).
-  reverseModeEnabled: false,
-  // Hold-to-talk: reconhecimento de voz disparado por mouse down na tela.
+  reverseModeEnabled: false,  // Modo silaba: mostra a palavra russa com UMA silaba aleatoria destacada e
+  // o jogador digita a romanizacao dessa silaba (ver js/syllables.js).
+  syllableModeEnabled: false,
+  // Dados da rodada atual do modo silaba (calculados em game.js).
+  syllableParts: [],
+  syllableHighlightIndex: -1,  // Hold-to-talk: reconhecimento de voz disparado por mouse down na tela.
   // Preenche o mesmo buffer do teclado (state.userTyped).
   holdToTalkActive: false,
 

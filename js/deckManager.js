@@ -61,6 +61,7 @@ export function applyDeckSettingsToGame(settings, onCompleteCallback) {
   state.pronunciationModeEnabled = settings.pronunciationModeEnabled ?? false;
   state.hearingModeEnabled = settings.hearingModeEnabled ?? false;
   state.reverseModeEnabled = settings.reverseModeEnabled ?? false;
+  state.syllableModeEnabled = settings.syllableModeEnabled ?? false;
   state.timerModeEnabled = settings.timerModeEnabled ?? false;
 
   state.targetRetention = settings.targetRetention ?? 0.9;
@@ -171,6 +172,7 @@ export function getDefaultSettings() {
     pronunciationModeEnabled: false,
     hearingModeEnabled: false,
     reverseModeEnabled: false,
+    syllableModeEnabled: false,
     timerModeEnabled: false,
 
     voiceIndex: "none",
@@ -186,6 +188,7 @@ export function applySettingsToModalUI(settings) {
   dom.restartOnWrongToggle.checked = s.restartOnWrongEnabled;
   dom.hearingModeToggle.checked = s.hearingModeEnabled || false;
   dom.reverseModeToggle.checked = s.reverseModeEnabled || false;
+  dom.syllableModeToggle.checked = s.syllableModeEnabled || false;
   dom.answerTipInput.value = s.answerTipLetters;
 
   dom.gameSpeedInput.value = s.gameSpeed || 1;
@@ -238,6 +241,7 @@ function readSettingsFromUI() {
     pronunciationModeEnabled: dom.modePronunciationToggle.checked,
     hearingModeEnabled: dom.hearingModeToggle.checked,
     reverseModeEnabled: dom.reverseModeToggle.checked,
+    syllableModeEnabled: dom.syllableModeToggle.checked,
     timerModeEnabled: dom.modeTimerToggle.checked,
 
     gameSpeed: parseInt(dom.gameSpeedInput.value, 10) || 1,

@@ -27,6 +27,7 @@ export const dom = {
   restartOnWrongToggle: document.getElementById("restartOnWrongToggle"),
   hearingModeToggle: document.getElementById("hearingModeToggle"),
   reverseModeToggle: document.getElementById("reverseModeToggle"),
+  syllableModeToggle: document.getElementById("syllableModeToggle"),
 
   voiceSelect: document.getElementById("voiceSelect"),
   answerTipInput: document.getElementById("answerTipInput"),
@@ -222,6 +223,7 @@ export function updateModeSettingsVisibility() {
     toggleSetting(dom.restartOnWrongToggle, true);
     toggleSetting(dom.hearingModeToggle, true);
     toggleSetting(dom.reverseModeToggle, true);
+    toggleSetting(dom.syllableModeToggle, true);
     toggleSetting(dom.randomToggle, true);
 
   }

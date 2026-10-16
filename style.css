@@ -734,6 +734,29 @@ body.dark-mode .modal-content select {
   text-shadow: 0 0 2px currentColor;
 }
 
+/* Modo silaba: a silaba sorteada e sempre MAIS CLARA que o resto da palavra
+   para o jogador saber qual pedaco romanizacar.
+   - com dica de cor: mistura a PROPRIA cor da palavra com branco. Isso sobe a
+     luminosidade mantendo matiz e saturacao, ao contrario de filter:brightness,
+     que lavava a cor (o tom ficava desbotado/palido).
+   - sem dica de cor: cinza claro, que se distingue do preto/cinza-escuro padrao. */
+.syllable-highlight {
+  font-weight: bold;
+}
+
+.syllable-highlight-color {
+  color: color-mix(in srgb, currentColor 78%, white);
+}
+
+.syllable-highlight-plain {
+  color: #9aa0a6;
+  text-shadow: 0 0 2px currentColor;
+}
+
+body.dark-mode .syllable-highlight-plain {
+  color: #b8bec6;
+}
+
 #scorePanel {
   position: fixed;
   top: 20px;

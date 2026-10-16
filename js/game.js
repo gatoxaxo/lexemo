@@ -2,6 +2,7 @@ import { state, GROUP_SIZE, correctSound, wrongSound } from "./state.js";
 import * as utils from "./utils.js";
 import * as srs from "./srs.js";
 import * as speech from "./speech.js";
+import * as syllables from "./syllables.js";
 import { timerMode } from "./timerMode.js";
 import {
   dom,
@@ -127,6 +128,14 @@ function _applySrsStyles(syllableEl, translationEl) {
 }
 
 function _setSyllableText(questionEl) {
+  // Modo silaba: a palavra e renderizada com UMA silaba destacada, montada em
+  // spans separados (ver _renderSyllableHighlight). Nao entra no fluxo do
+  // "prompt -> target" porque o estimulo nao e um texto unico.
+  if (state.syllableModeEnabled) {
+    _renderSyllableHighlight(questionEl);
+    return;
+  }
+
   // Modo reverso: o ESTIMULO passa a ser o answer do card.
   const prompt = state.reverseModeEnabled
     ? state.currentSyllable.answer
@@ -142,9 +151,36 @@ function _setSyllableText(questionEl) {
   }
 }
 
+// Monta a palavra como spans: a silaba sorteada ganha a classe que a deixa
+// mais clara. A cor-base vem do _applyFreeModeStyles (dica de cor quando
+// ligada, cor padrao do texto quando nao). O destaque e SEMPRE mais claro:
+// com dica de cor fica um tom claro da mesma matiz; sem dica fica cinza claro,
+// que se distingue do preto/cinza-escuro padrao.
+function _renderSyllableHighlight(questionEl) {
+  questionEl.textContent = "";
+
+  state.syllableParts.forEach((parte, i) => {
+    const span = document.createElement("span");
+    span.textContent = parte;
+    if (i === state.syllableHighlightIndex) {
+      span.classList.add("syllable-highlight");
+      span.classList.add(
+        state.colorHintEnabled ? "syllable-highlight-color" : "syllable-highlight-plain",
+      );
+    }
+    questionEl.appendChild(span);
+  });
+}
+
 // Alvo = o que o jogador deve digitar. Sem reverse: o answer (traducao).
 // Com reverse: o question (o termo no idioma estudado).
+// Modo silaba: a romanizacao da silaba destacada.
 function _getTargetText() {
+  if (state.syllableModeEnabled) {
+    const partes = state.syllableParts;
+    const i = state.syllableHighlightIndex;
+    return i >= 0 && i < partes.length ? syllables.romanizar(partes[i]) : "";
+  }
   return state.reverseModeEnabled
     ? state.currentSyllable.question
     : state.currentSyllable.answer;
@@ -154,8 +190,25 @@ function _getTargetText() {
 // punir quando question e answer sao iguais (decks sem traducao, ver notas).
 function _isTargetMatch(typed) {
   const target = _getTargetText();
+
+  if (state.syllableModeEnabled) {
+    return typed === target;
+  }
+
   if (typed === target) return true;
   return state.reverseModeEnabled && typed === state.currentSyllable.answer;
+}
+
+// Sorteia a silaba da rodada. Recalculado a cada card exibido, para a mesma
+// palavra poder cair com destaque diferente em repeticoes.
+function _setupSyllableRound() {
+  state.syllableParts = [];
+  state.syllableHighlightIndex = -1;
+  if (!state.syllableModeEnabled || !state.currentSyllable) return;
+
+  const partes = syllables.dividirSilabas(state.currentSyllable.question);
+  state.syllableParts = partes;
+  state.syllableHighlightIndex = syllables.escolherSilaba(partes);
 }
 
 
@@ -174,15 +227,15 @@ function _applyFreeModeStyles(syllableEl, translationEl) {
 
   if (state.positionHintEnabled && !state.pronunciationModeEnabled) {
 
-    const fullText = state.reverseModeEnabled
-      ? state.currentSyllable.answer + " → " + state.currentSyllable.question
-      : state.currentSyllable.question + " → " + state.currentSyllable.answer;
-    const { x, y } = utils.generatePosition(
-      fullText,
-      state.reverseModeEnabled
+    // A posicao e derivada do par estimulo → alvo. No modo silaba o estimulo e
+    // a palavra inteira (renderizada em spans, nao como texto unico).
+    const prompt = state.syllableModeEnabled
+      ? state.currentSyllable.question
+      : state.reverseModeEnabled
         ? state.currentSyllable.answer
-        : state.currentSyllable.question,
-    );
+        : state.currentSyllable.question;
+    const fullText = prompt + " → " + _getTargetText();
+    const { x, y } = utils.generatePosition(fullText, prompt);
     syllableEl.style.left = x + "px";
     syllableEl.style.top = y + "px";
   } else {
@@ -207,6 +260,10 @@ export function displaySyllable() {
   if (!_pickNextCard()) return;
 
   _showContextHint();
+
+  // Sorteia a silaba ANTES de aplicar os estilos: _applyFreeModeStyles ->
+  // _setSyllableText monta a palavra destacada.
+  _setupSyllableRound();
 
   const syllableEl = _createSyllableElement();
   const questionEl = _createQuestionElement();
@@ -237,7 +294,11 @@ export function displaySyllable() {
       // Modo reverso: o estimulo e o answer do card, entao tocar o audio do
       // question aqui entregaria a resposta. O audio so sai quando o jogador
       // erra (ver _handleFreeModeIncorrect).
-      if (!state.reverseModeEnabled) {
+      // Modo silaba: a palavra E o estimulo (esta visivel), mas o TTS le a
+      // palavra inteira e nao ajuda a isolar a silaba - o valor do exercicio
+      // esta justamente em o jogador ler a silaba destacada. Por isso tambem
+      // nao toca automaticamente; o audio sai no erro.
+      if (!state.reverseModeEnabled && !state.syllableModeEnabled) {
         speech.speakCurrentSyllable();
       }
     }
@@ -540,7 +601,9 @@ function _handleFreeModeIncorrect() {
   }
 
   // Modo reverso: o audio do question era a resposta, entao so toca no erro.
-  if (state.reverseModeEnabled) {
+  // Modo silaba: idem - o audio sai no erro para reforcar o som da palavra
+  // que o jogador nao conseguiu romanizacar.
+  if (state.reverseModeEnabled || state.syllableModeEnabled) {
     state.isSpeechUnlocked = true;
     speech.speakCurrentSyllable(true);
   }

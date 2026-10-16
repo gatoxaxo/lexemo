@@ -90,5 +90,6 @@
     "TARGET_RETENTION_PCT": "Целевое удержание %",
     "NEW_CARDS_LIMIT": "Лимит новых карточек",
     "HEARING_MODE": "Режим аудирования",
-    "REVERSE_MODE": "Обратный режим"
+    "REVERSE_MODE": "Обратный режим",
+    "SYLLABLE_MODE": "Режим слогов"
 }
