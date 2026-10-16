@@ -90,6 +90,9 @@
     "TARGET_RETENTION_PCT": "Target Retention %",
     "NEW_CARDS_LIMIT": "New Cards Limit",
     "HEARING_MODE": "Hearing Mode",
-    "REVERSE_MODE": "Reverse Mode"
+    "REVERSE_MODE": "Reverse Mode",
+    "TYPED_PRONOUNCE_MODE": "Typed Pronunciation",
+    "PRONOUNCE": "Pronounce (optional)",
+    "NO_CARDS_WITH_PRONOUNCE": "No cards with a pronunciation field in this group. Typed Pronunciation mode has been turned off."
 }
 
