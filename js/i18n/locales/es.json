@@ -93,5 +93,5 @@
     "REVERSE_MODE": "Modo inverso",
     "TYPED_PRONOUNCE_MODE": "Pronunciación escrita",
     "PRONOUNCE": "Pronunciación (opcional)",
-    "NO_CARDS_WITH_PRONOUNCE": "Ninguna carta de este grupo tiene el campo de pronunciación. El modo Pronunciación escrita se ha desactivado."
+    "PRONOUNCE_BEING_LEARNED": "Aún sin pronunciación — lo que escribas ahora se guardará como la pronunciación de esta carta."
 }

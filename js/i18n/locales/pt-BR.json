@@ -93,5 +93,5 @@
     "REVERSE_MODE": "Modo reverso",
     "TYPED_PRONOUNCE_MODE": "Pronúncia digitada",
     "PRONOUNCE": "Pronúncia (opcional)",
-    "NO_CARDS_WITH_PRONOUNCE": "Nenhum card deste grupo tem o campo de pronúncia. O modo Pronúncia digitada foi desativado."
+    "PRONOUNCE_BEING_LEARNED": "Ainda sem pronúncia — o que você digitar agora será salvo como a pronúncia deste card."
 }

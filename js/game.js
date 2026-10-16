@@ -75,7 +75,7 @@ function _pickNextCard() {
       return false;
     }
   } else {
-    const picked = _pickPronounceCapableSyllable();
+    const picked = pickRandomSyllable();
     if (!picked) return false;
     state.currentSyllable = picked.syllable;
     state.currentSyllable.pickIndex = picked.index;
@@ -83,44 +83,26 @@ function _pickNextCard() {
   return true;
 }
 
-// No modo pronuncia digitada nao faz sentido mostrar um card sem `pronounce`
-// (nao haveria o que digitar).
-// DEFEITO REAL (corrigido): tentar varias vezes no aleatorio e desistir
-// desligava o modo com cards validos ainda disponiveis. Num grupo de 4 com 1
-// card sem pronounce, a chance de sortear o ruim 4 vezes seguidas e ~0.4% por
-// rodada, mas ocorre de fato e o usuario perde o modo sem motivo.
-// Agora os cards inelegiveis sao RETIRADOS do grupo (uma vez), e so entao
-// sorteamos entre os que sobraram - sem tentativa e erro.
-function _pickPronounceCapableSyllable() {
-  if (!state.typedPronounceModeEnabled) return pickRandomSyllable();
-
-  const haviaInelegivel = state.currentGroup.some((c) => !c.pronounce);
-  if (haviaInelegivel) {
-    state.currentGroup = state.currentGroup.filter((c) => c.pronounce);
-    // lastPickedIndex aponta para o array antigo; sem isso o "nao repetir"
-    // fica sem efeito ou aponta para fora.
-    lastPickedIndex = -1;
-  }
-
-  if (state.currentGroup.length === 0) {
-    showCustomAlert(getTranslation("NO_CARDS_WITH_PRONOUNCE"), () => {
-      state.typedPronounceModeEnabled = false;
-    });
-    return null;
-  }
-
-  return pickRandomSyllable();
-}
-
 function _showContextHint() {
-  if (state.currentSyllable.hint && !state.pronunciationModeEnabled) {
-    dom.contextHintText.textContent = state.currentSyllable.hint;
+  if (state.pronunciationModeEnabled) {
+    dom.contextHintBox.style.display = "none";
+    return;
+  }
+
+  // Card sem pronounce no modo pronuncia digitada: a caixa de contexto avisa
+  // que a rodada e de criacao (o que for digitado vira a pronuncia do card),
+  // para o jogador nao achar que esta sendo reprovado sem criterio.
+  const hint = _needsPronounce()
+    ? getTranslation("PRONOUNCE_BEING_LEARNED")
+    : state.currentSyllable.hint;
+
+  if (hint) {
+    dom.contextHintText.textContent = hint;
     dom.contextHintBox.style.display = "flex";
   } else {
     dom.contextHintBox.style.display = "none";
   }
 }
-
 
 
 function _createSyllableElement() {
@@ -646,11 +628,42 @@ function _deleteCurrentCardLogic() {
 }
 
 export function handleFreeModeEnter() {
+  // Modo pronuncia digitada, card ainda SEM `pronounce`: a primeira resposta
+  // do jogador E a pronuncia dele. Grava e repete o card (nao avanca nem conta
+  // ponto): a rodada de criacao nao e uma rodada de teste - cobrar acerto aqui
+  // seria cobrar que ele adivinhasse o que ele mesmo acabou de definir.
+  if (_needsPronounce() && state.userTyped) {
+    _saveTypedAsPronounce(state.userTyped);
+    return;
+  }
+
   if (_isTargetMatch(state.userTyped)) {
     _handleFreeModeCorrect();
   } else {
     _handleFreeModeIncorrect();
   }
+}
+
+// Card sem pronuncia cadastrada no modo pronuncia digitada. NAO depende do
+// jogador ter digitado: e o estado do card. Quem decide se e hora de gravar e
+// o chamador (handleFreeModeEnter), que exige texto.
+function _needsPronounce() {
+  return (
+    state.typedPronounceModeEnabled &&
+    !!state.currentSyllable &&
+    !state.currentSyllable.pronounce
+  );
+}
+
+function _saveTypedAsPronounce(typed) {
+  state.currentSyllable.pronounce = typed;
+  document.dispatchEvent(new CustomEvent("cardUpdated"));
+
+  if (state.translationElement) {
+    state.translationElement.textContent = "";
+  }
+  state.userTyped = "";
+  displaySyllable();
 }
 
 export function handleDeleteCurrentCardRequest() {
