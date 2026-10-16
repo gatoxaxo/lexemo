@@ -93,6 +93,6 @@
     "REVERSE_MODE": "Reverse Mode",
     "TYPED_PRONOUNCE_MODE": "Typed Pronunciation",
     "PRONOUNCE": "Pronounce (optional)",
-    "PRONOUNCE_BEING_LEARNED": "No pronunciation yet — what you type now will be saved as this card's pronunciation."
+    "NO_CARDS_WITH_PRONOUNCE": "No cards with a pronunciation field in this group. Typed Pronunciation mode has been turned off."
 }
 
