@@ -59,7 +59,12 @@ function _pickNonRepeatingRandomIndex(group) {
 function _getPendentes(card) {
   if (!card) return null;
   const chave = card.question;
-  if (!state.syllableCoverage[chave]) {
+  // DEFEITO REAL: usar `if (!state.syllableCoverage[chave])` para decidir se
+  // inicializa nao funciona, porque a lista COMPLETA de pendentes e [] (array
+  // vazio) - que e FALSY em JS. Entao uma palavra ja coberta era reinicializada
+  // com todas as silabas, VOLTANDO a ser sorteada e fazendo silaba ja acertada
+  // reaparecer. A checagem tem que ser por presenca da chave, nao por truthiness.
+  if (!Object.prototype.hasOwnProperty.call(state.syllableCoverage, chave)) {
     // Primeira vez nesta palavra: todas as silabas pendentes.
     const total = syllables.dividirSilabas(chave).length;
     state.syllableCoverage[chave] = [];
@@ -271,6 +276,19 @@ function _setupSyllableRound() {
   const partes = syllables.dividirSilabas(state.currentSyllable.question);
   state.syllableParts = partes;
 
+  // DEFEITO REAL: ao errar, o card e reexibido por displaySyllable() e a
+  // silaba era SORTEADA DE NOVO. O jogador via a mesma silaba repetir varias
+  // vezes seguidas (so as vezes mudava), parecendo que o modo repetia silaba
+  // ja acertada. Ao errar, a rodada e a MESMA: mantem a silaba ja sorteada
+  // para a tentativa valer como repeticao daquela silaba especifica.
+  //
+  // A retencao so vale se a palavra tambem for a mesma: o sorteio de card
+  // pode trocar de palavra, e nesse caso o indice guardado nao se aplica.
+  if (state.syllableRetryIndex >= 0 && state.syllableRetryQuestion === state.currentSyllable.question) {
+    state.syllableHighlightIndex = state.syllableRetryIndex;
+    return;
+  }
+
   const pendentes = _getPendentes(state.currentSyllable);
   const disponiveis = pendentes && pendentes.length > 0
     ? pendentes
@@ -384,6 +402,8 @@ function _resetGameState() {
   state.currentGroup = [];
   // Zerar a cobertura para um restart comecar a palavra do inicio.
   state.syllableCoverage = {};
+  state.syllableRetryIndex = -1;
+  state.syllableRetryQuestion = null;
   srs.resetSessionStats();
 }
 
@@ -525,6 +545,22 @@ function _updateScoreAndGroup() {
   if (state.currentGroup.length === 0) {
     state.currentGroupIndex++;
     loadGroup(state.currentGroupIndex);
+  }
+}
+
+// Modo silaba: marcar a silaba mesmo quando o acerto vem depois de um erro.
+//
+// DEFEITO REAL: no free mode, _handleFreeModeCorrect so pontua/avanca quando
+// !hintUsed. Como errar seta hintUsed=true, acertar a silaba na repeticao NAO
+// marcava nada: a silaba continuava pendente e voltava a ser sorteada depois,
+// dando a impressao de que o modo repetia silaba ja acertada. A cobertura tem
+// que ser independente do hint - o jogador provou que sabe aquela silaba.
+function _marcarSilabaPorRepeticao() {
+  if (!state.syllableModeEnabled || !state.currentSyllable) return;
+  _marcarSilabaAcertada(state.currentSyllable, state.syllableHighlightIndex);
+  if (_palavraCoberta(state.currentSyllable)) {
+    const i = state.currentGroup.indexOf(state.currentSyllable);
+    if (i > -1) state.currentGroup.splice(i, 1);
   }
 }
 
@@ -674,9 +710,19 @@ function _handleFreeModeCorrect() {
   if (!state.hintUsed) {
     _playCorrectFeedback();
     _updateScoreAndGroup();
+  } else {
+    // Acerto depois de ja ter visto a resposta (tipicamente a repeticao de uma
+    // silaba errada). No modo silaba ainda conta para a cobertura - ver
+    // _marcarSilabaPorRepeticao. Nos outros modos mantem o comportamento
+    // antigo (nao pontua).
+    _marcarSilabaPorRepeticao();
   }
   if (state.translationElement) state.translationElement.textContent = "";
   if (state.currentSyllableElement) state.currentSyllableElement.remove();
+  // Acertou (ou ja tinha visto a resposta): a proxima exibicao sorteia uma
+  // silaba nova, em vez de repetir a desta rodada.
+  state.syllableRetryIndex = -1;
+  state.syllableRetryQuestion = null;
   displaySyllable();
 }
 
@@ -699,6 +745,13 @@ function _handleFreeModeIncorrect() {
   }
   state.userTyped = "";
   state.hintUsed = true;
+
+  // Modo silaba: o jogador errou ESTA silaba, entao a repeticao imediata tem
+  // que ser a mesma silaba - senao ele nunca consegue treinar a que errou.
+  if (state.syllableModeEnabled) {
+    state.syllableRetryIndex = state.syllableHighlightIndex;
+    state.syllableRetryQuestion = state.currentSyllable.question;
+  }
 
   if (state.restartOnWrongEnabled) {
     setTimeout(() => {

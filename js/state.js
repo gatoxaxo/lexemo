@@ -57,7 +57,11 @@ export const state = {
   syllableHighlightIndex: -1,
   // Cobertura no modo silaba: cada palavra precisa ter TODAS as silabas
   // acertadas antes de sair do grupo. Mapeia question -> indices pendentes.
-  syllableCoverage: {},  // Hold-to-talk: reconhecimento de voz disparado por mouse down na tela.
+  syllableCoverage: {},
+  // Silaba a manter na proxima exibicao (-1 = sortear). Usado para repetir a
+  // MESMA silaba quando o jogador erra, em vez de sortear outra.
+  syllableRetryIndex: -1,
+  syllableRetryQuestion: null,  // Hold-to-talk: reconhecimento de voz disparado por mouse down na tela.
   // Preenche o mesmo buffer do teclado (state.userTyped).
   holdToTalkActive: false,
 
