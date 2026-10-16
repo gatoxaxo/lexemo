@@ -739,7 +739,10 @@ body.dark-mode .modal-content select {
    - com dica de cor: mistura a PROPRIA cor da palavra com branco. Isso sobe a
      luminosidade mantendo matiz e saturacao, ao contrario de filter:brightness,
      que lavava a cor (o tom ficava desbotado/palido).
-   - sem dica de cor: cinza claro, que se distingue do preto/cinza-escuro padrao. */
+   - sem dica de cor: mistura a cor BASE do texto com branco. Assim o destaque
+     acompanha o tema (claro/escuro) em vez de ser um cinza fixo:
+       escuro -> texto quase branco, destaque branco puro (bem sutil)
+       claro  -> texto quase preto, destaque cinza medio (legivel) */
 .syllable-highlight {
   font-weight: bold;
 }
@@ -749,12 +752,8 @@ body.dark-mode .modal-content select {
 }
 
 .syllable-highlight-plain {
-  color: #9aa0a6;
+  color: color-mix(in srgb, var(--text-main) 55%, white);
   text-shadow: 0 0 2px currentColor;
-}
-
-body.dark-mode .syllable-highlight-plain {
-  color: #b8bec6;
 }
 
 #scorePanel {
