@@ -222,18 +222,9 @@ export function displaySyllable() {
   }
   _appendSyllableToDom(syllableEl, questionEl, translationEl);
   
-  if (state.hearingModeEnabled && state.reverseModeEnabled) {
-    // hearing + reverse = ler/som do texto de entrada (o answer) nao faz
-    // sentido: o estimulo auditivo e a traducao, que nao tem audio util.
-    // Por isso o hearing e ignorado quando o reverse esta ligado.
-    console.warn("hearingMode ignorado: incompativel com reverseMode");
-  }
-
   if (state.hearingModeEnabled && !state.evaluativeModeEnabled && !state.reverseModeEnabled) {
     questionEl.style.opacity = "0";
   }
-
-
 
   if (state.pronunciationModeEnabled) {
     if (state.utterance) {
@@ -243,7 +234,12 @@ export function displaySyllable() {
     setTimeout(speech.startRecognition, 200);
   } else {
     if (state.autoplayEnabled) {
-      speech.speakCurrentSyllable();
+      // Modo reverso: o estimulo e o answer do card, entao tocar o audio do
+      // question aqui entregaria a resposta. O audio so sai quando o jogador
+      // erra (ver _handleFreeModeIncorrect).
+      if (!state.reverseModeEnabled) {
+        speech.speakCurrentSyllable();
+      }
     }
   }
 }
@@ -541,6 +537,12 @@ function _handleFreeModeCorrect() {
 function _handleFreeModeIncorrect() {
   if (state.translationElement) {
     state.translationElement.textContent = _getTargetText();
+  }
+
+  // Modo reverso: o audio do question era a resposta, entao so toca no erro.
+  if (state.reverseModeEnabled) {
+    state.isSpeechUnlocked = true;
+    speech.speakCurrentSyllable(true);
   }
 
   if (state.wrongSoundEnabled) {

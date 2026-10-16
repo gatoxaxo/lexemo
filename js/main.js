@@ -366,11 +366,14 @@ function _handleKeyEnter() {
 }
 
 // --- Hold-to-talk ---------------------------------------------------------
-// Segurar o mouse esquerdo na tela liga o microfone e o que for falado vira o
-// texto digitado. Soltar encerra. O teclado continua funcionando normalmente
-// quando ninguem esta segurando (necessario para teclados de outros alfabetos).
+// TEMPORARIAMENTE DESATIVADO: o gatilho por mouse foi desligado porque o
+// usuario vai escolher uma TECLA dedicada para ativar o microfone. Por
+// enquanto o unico caminho de entrada e o teclado.
+// A implementacao de voz segue em speech.js (startHoldRecognition) e sera
+// ligada de novo na tecla escolhida - nao reescrever o motor, so o gatilho.
+const HOLD_TO_TALK_MOUSE_ENABLED = false;
 
-// Enquanto segura, a tela entra nesta classe para o arrasto nao selecionar
+// Enquanto ouve, a tela entra nesta classe para o arrasto nao selecionar
 // texto da interface.
 const HOLD_NEUTRAL_CLICK_CLASS = "no-select";
 
@@ -384,6 +387,7 @@ function _canHoldToTalk() {
 }
 
 function _handleHoldStart(e) {
+  if (!HOLD_TO_TALK_MOUSE_ENABLED) return;
   if (isModalOpen() || e.button !== 0) return;
   if (!_canHoldToTalk()) return;
   // e.target pode nao ser um Element (ex.: o proprio document), e nesse caso
@@ -401,6 +405,7 @@ function _handleHoldStart(e) {
 }
 
 function _handleHoldEnd() {
+  if (!HOLD_TO_TALK_MOUSE_ENABLED) return;
   if (!state.holdToTalkActive) return;
   state.holdToTalkActive = false;
   document.body.classList.remove(HOLD_NEUTRAL_CLICK_CLASS);
@@ -449,7 +454,13 @@ function _handleKeyDown(e) {
 
   if (e.key === "Backspace") {
     game.handleBackspace();
-  } else if (e.key === "Shift" && !state.pronunciationModeEnabled && !state.timerModeEnabled) {
+  } else if (
+    e.key === "Shift" &&
+    !state.pronunciationModeEnabled &&
+    !state.timerModeEnabled &&
+    !state.reverseModeEnabled
+  ) {
+    // No modo reverso o Shift nao faz nada: o audio so toca ao errar.
     game.handleVoiceRepeat();
   } else if (e.key === "Enter") {
     _handleKeyEnter();
