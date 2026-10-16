@@ -90,8 +90,5 @@
     "TARGET_RETENTION_PCT": "% de retención objetivo",
     "NEW_CARDS_LIMIT": "Límite de cartas nuevas",
     "HEARING_MODE": "Modo de audición",
-    "REVERSE_MODE": "Modo inverso",
-    "TYPED_PRONOUNCE_MODE": "Pronunciación escrita",
-    "PRONOUNCE": "Pronunciación (opcional)",
-    "NO_CARDS_WITH_PRONOUNCE": "Ninguna carta de este grupo tiene el campo de pronunciación. El modo Pronunciación escrita se ha desactivado."
+    "REVERSE_MODE": "Modo inverso"
 }

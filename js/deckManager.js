@@ -18,13 +18,6 @@ import { selectVoice, stopRecognition } from "./speech.js";
 import { getTranslation } from "./i18n/i18n.js";
 import { timerMode } from "./timerMode.js";
 
-// DEFEITO REAL (corrigido): main.js chamava deckManager.renderDeckModal() em
-// dois listeners, mas renderDeckModal nunca era reexportado aqui - so
-// importado (e ainda usado localmente). Resultado: TypeError
-// "deckManager.renderDeckModal is not a function" em cardDeleted/cardUpdated,
-// o modal de decks nao era redesenhado apos editar/apagar um card.
-export { renderDeckModal };
-
 export function loadDecks() {
   const decksJson = localStorage.getItem(DECK_STORAGE_KEY);
   state.allDecks = decksJson ? JSON.parse(decksJson) : [];
@@ -68,7 +61,6 @@ export function applyDeckSettingsToGame(settings, onCompleteCallback) {
   state.pronunciationModeEnabled = settings.pronunciationModeEnabled ?? false;
   state.hearingModeEnabled = settings.hearingModeEnabled ?? false;
   state.reverseModeEnabled = settings.reverseModeEnabled ?? false;
-  state.typedPronounceModeEnabled = settings.typedPronounceModeEnabled ?? false;
   state.timerModeEnabled = settings.timerModeEnabled ?? false;
 
   state.targetRetention = settings.targetRetention ?? 0.9;
@@ -179,7 +171,6 @@ export function getDefaultSettings() {
     pronunciationModeEnabled: false,
     hearingModeEnabled: false,
     reverseModeEnabled: false,
-    typedPronounceModeEnabled: false,
     timerModeEnabled: false,
 
     voiceIndex: "none",
@@ -195,7 +186,6 @@ export function applySettingsToModalUI(settings) {
   dom.restartOnWrongToggle.checked = s.restartOnWrongEnabled;
   dom.hearingModeToggle.checked = s.hearingModeEnabled || false;
   dom.reverseModeToggle.checked = s.reverseModeEnabled || false;
-  dom.typedPronounceModeToggle.checked = s.typedPronounceModeEnabled || false;
   dom.answerTipInput.value = s.answerTipLetters;
 
   dom.gameSpeedInput.value = s.gameSpeed || 1;
@@ -248,7 +238,6 @@ function readSettingsFromUI() {
     pronunciationModeEnabled: dom.modePronunciationToggle.checked,
     hearingModeEnabled: dom.hearingModeToggle.checked,
     reverseModeEnabled: dom.reverseModeToggle.checked,
-    typedPronounceModeEnabled: dom.typedPronounceModeToggle.checked,
     timerModeEnabled: dom.modeTimerToggle.checked,
 
     gameSpeed: parseInt(dom.gameSpeedInput.value, 10) || 1,
@@ -325,7 +314,6 @@ function _mergeSrsData(newContentBase, oldContent) {
 
     if (matchedOldCard) {
       matchedOldCard.hint = newCard.hint || "";
-      matchedOldCard.pronounce = newCard.pronounce || "";
       matchedOldCard.question = q;
       matchedOldCard.answer = a;
       return matchedOldCard;
@@ -334,7 +322,6 @@ function _mergeSrsData(newContentBase, oldContent) {
       question: q,
       answer: a,
       hint: newCard.hint || "",
-      pronounce: newCard.pronounce || "",
       s: 0.1,
       d: 0.5,
       lastReview: null,
@@ -360,7 +347,6 @@ function _createNewDeck(deckName, settings, newContentBase) {
     question: (card.question || "").trim().toLowerCase(),
     answer: (card.answer || "").trim().toLowerCase(),
     hint: card.hint || "",
-    pronounce: card.pronounce || "",
     s: 0.1,
     d: 0.5,
     lastReview: null,

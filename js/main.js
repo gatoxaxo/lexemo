@@ -526,9 +526,6 @@ function _initEditCardModalListeners() {
       question: dom.editCardQuestionInput.value.trim().toLowerCase(),
       answer: dom.editCardAnswerInput.value.trim().toLowerCase(),
       hint: dom.editCardHintInput.value.trim(),
-      // Campo opcional: guardado em minusculas para a comparacao do modo
-      // pronuncia digitada ser tolerante a caixa.
-      pronounce: dom.editCardPronounceInput.value.trim().toLowerCase(),
     };
 
     if (!newData.question || !newData.answer) {

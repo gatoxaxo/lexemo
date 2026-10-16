@@ -75,41 +75,12 @@ function _pickNextCard() {
       return false;
     }
   } else {
-    const picked = _pickPronounceCapableSyllable();
+    const picked = pickRandomSyllable();
     if (!picked) return false;
     state.currentSyllable = picked.syllable;
     state.currentSyllable.pickIndex = picked.index;
   }
   return true;
-}
-
-// No modo pronuncia digitada nao faz sentido mostrar um card sem `pronounce`
-// (nao haveria o que digitar).
-// DEFEITO REAL (corrigido): tentar varias vezes no aleatorio e desistir
-// desligava o modo com cards validos ainda disponiveis. Num grupo de 4 com 1
-// card sem pronounce, a chance de sortear o ruim 4 vezes seguidas e ~0.4% por
-// rodada, mas ocorre de fato e o usuario perde o modo sem motivo.
-// Agora os cards inelegiveis sao RETIRADOS do grupo (uma vez), e so entao
-// sorteamos entre os que sobraram - sem tentativa e erro.
-function _pickPronounceCapableSyllable() {
-  if (!state.typedPronounceModeEnabled) return pickRandomSyllable();
-
-  const haviaInelegivel = state.currentGroup.some((c) => !c.pronounce);
-  if (haviaInelegivel) {
-    state.currentGroup = state.currentGroup.filter((c) => c.pronounce);
-    // lastPickedIndex aponta para o array antigo; sem isso o "nao repetir"
-    // fica sem efeito ou aponta para fora.
-    lastPickedIndex = -1;
-  }
-
-  if (state.currentGroup.length === 0) {
-    showCustomAlert(getTranslation("NO_CARDS_WITH_PRONOUNCE"), () => {
-      state.typedPronounceModeEnabled = false;
-    });
-    return null;
-  }
-
-  return pickRandomSyllable();
 }
 
 function _showContextHint() {
@@ -156,9 +127,7 @@ function _applySrsStyles(syllableEl, translationEl) {
 }
 
 function _setSyllableText(questionEl) {
-  // O ESTIMULO depende do modo: no reverso e o answer, senao e o question.
-  // No modo pronuncia digitada o estimulo tambem e o question (a palavra no
-  // idioma estudado), so muda o que se digita e como se compara.
+  // Modo reverso: o ESTIMULO passa a ser o answer do card.
   const prompt = state.reverseModeEnabled
     ? state.currentSyllable.answer
     : state.currentSyllable.question;
@@ -175,29 +144,16 @@ function _setSyllableText(questionEl) {
 
 // Alvo = o que o jogador deve digitar. Sem reverse: o answer (traducao).
 // Com reverse: o question (o termo no idioma estudado).
-// Pronuncia digitada tem prioridade: o alvo e o `pronounce` do card.
 function _getTargetText() {
-  if (state.typedPronounceModeEnabled) {
-    return state.currentSyllable.pronounce || "";
-  }
   return state.reverseModeEnabled
     ? state.currentSyllable.question
     : state.currentSyllable.answer;
 }
 
-// Comparacao de acerto.
-// - Pronuncia digitada: comparacao FONETICA (mesmaPronunciation), porque o
-//   jogador escreve uma transliteracao aproximada e nao precisa acertar o
-//   espelho exato do campo `pronounce`.
-// - Modo reverso: aceita as duas direcoes para nao punir quando question e
-//   answer sao iguais (decks sem traducao, ver notas).
+// Comparacao de acerto. O modo reverso aceita as duas direcoes para nao
+// punir quando question e answer sao iguais (decks sem traducao, ver notas).
 function _isTargetMatch(typed) {
   const target = _getTargetText();
-
-  if (state.typedPronounceModeEnabled) {
-    return utils.samePronunciation(target, typed);
-  }
-
   if (typed === target) return true;
   return state.reverseModeEnabled && typed === state.currentSyllable.answer;
 }
@@ -218,13 +174,15 @@ function _applyFreeModeStyles(syllableEl, translationEl) {
 
   if (state.positionHintEnabled && !state.pronunciationModeEnabled) {
 
-    // A posicao e derivada do par estimulo → alvo, entao tem que acompanhar
-    // o modo (reverso inverte; pronuncia digitada troca o alvo).
-    const prompt = state.reverseModeEnabled
-      ? state.currentSyllable.answer
-      : state.currentSyllable.question;
-    const fullText = prompt + " → " + _getTargetText();
-    const { x, y } = utils.generatePosition(fullText, prompt);
+    const fullText = state.reverseModeEnabled
+      ? state.currentSyllable.answer + " → " + state.currentSyllable.question
+      : state.currentSyllable.question + " → " + state.currentSyllable.answer;
+    const { x, y } = utils.generatePosition(
+      fullText,
+      state.reverseModeEnabled
+        ? state.currentSyllable.answer
+        : state.currentSyllable.question,
+    );
     syllableEl.style.left = x + "px";
     syllableEl.style.top = y + "px";
   } else {
@@ -697,7 +655,6 @@ export function updateCurrentCard(newData) {
   state.currentSyllable.question = newQ;
   state.currentSyllable.answer = newA;
   state.currentSyllable.hint = newData.hint;
-  state.currentSyllable.pronounce = newData.pronounce || "";
 
   if (newQ !== oldQ || newA !== oldA) {
     state.currentSyllable.s = 0.1;

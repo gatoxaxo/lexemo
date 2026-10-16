@@ -27,7 +27,6 @@ export const dom = {
   restartOnWrongToggle: document.getElementById("restartOnWrongToggle"),
   hearingModeToggle: document.getElementById("hearingModeToggle"),
   reverseModeToggle: document.getElementById("reverseModeToggle"),
-  typedPronounceModeToggle: document.getElementById("typedPronounceModeToggle"),
 
   voiceSelect: document.getElementById("voiceSelect"),
   answerTipInput: document.getElementById("answerTipInput"),
@@ -62,7 +61,6 @@ export const dom = {
   editCardQuestionInput: document.getElementById("editCardQuestionInput"),
   editCardAnswerInput: document.getElementById("editCardAnswerInput"),
   editCardHintInput: document.getElementById("editCardHintInput"),
-  editCardPronounceInput: document.getElementById("editCardPronounceInput"),
   editCardCancelBtn: document.getElementById("editCardCancelBtn"),
   editCardSaveBtn: document.getElementById("editCardSaveBtn"),
   generalSettingsBtn: document.getElementById("generalSettingsBtn"),
@@ -224,7 +222,6 @@ export function updateModeSettingsVisibility() {
     toggleSetting(dom.restartOnWrongToggle, true);
     toggleSetting(dom.hearingModeToggle, true);
     toggleSetting(dom.reverseModeToggle, true);
-    toggleSetting(dom.typedPronounceModeToggle, true);
     toggleSetting(dom.randomToggle, true);
 
   }
@@ -414,7 +411,6 @@ export function openEditCardModal(card) {
   dom.editCardQuestionInput.value = card.question;
   dom.editCardAnswerInput.value = card.answer;
   dom.editCardHintInput.value = card.hint || "";
-  dom.editCardPronounceInput.value = card.pronounce || "";
   dom.editCardModal.style.display = "flex";
   dom.editCardQuestionInput.focus();
 }

@@ -50,10 +50,6 @@ export const state = {
   // Reverse mode: o ANSWER vira o estimulo e o jogador digita o QUESTION.
   // So vale no free mode (SRS fica intacto).
   reverseModeEnabled: false,
-  // Modo pronuncia digitada: mostra o QUESTION (a palavra no idioma estudado)
-  // e o jogador digita o campo `pronounce` (romaji/transliteracao).
-  // Cards sem `pronounce` sao pulados neste modo (ver game.js).
-  typedPronounceModeEnabled: false,
   // Hold-to-talk: reconhecimento de voz disparado por mouse down na tela.
   // Preenche o mesmo buffer do teclado (state.userTyped).
   holdToTalkActive: false,
