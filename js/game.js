@@ -376,6 +376,7 @@ function _iniciarTranscricao() {
   const tokens = syllables.tokenizarTranscricao(state.transcriptionText);
   state.transcriptionTokens = tokens;
   state.transcriptionIndex = 0;
+  state.transcriptionRevealed = false;
   _renderTranscricao();
   return tokens.length > 0;
 }
@@ -404,7 +405,25 @@ function _renderTranscricao() {
   };
 
   montar(dom.transcriptionSourceText, "original");
-  montar(dom.transcriptionTargetText, "romanizado");
+
+  // A caixa de baixo e o CAMPO DE DIGITACAO: mostra o que o jogador esta
+  // escrevendo (mesmo estilo de caixa). A romanizacao esperada NAO fica
+  // visivel, senao o exercicio vira copia e mata o objetivo, que e aprender a
+  // ler a palavra. Ela so aparece quando o jogador erra a rodada - nesse
+  // momento a resposta ja e conhecida, entao revelar ajuda a corrigir.
+  dom.transcriptionTargetText.textContent = state.userTyped || "";
+
+  const revelado = dom.transcriptionRevealedText;
+  if (revelado) {
+    if (state.transcriptionRevealed) {
+      const esperado = tokens[idx] ? tokens[idx].romanizado : "";
+      revelado.textContent = esperado;
+      revelado.style.display = "block";
+    } else {
+      revelado.textContent = "";
+      revelado.style.display = "none";
+    }
+  }
 }
 
 // Resultado digitado pelo jogador no modo transcricao.
@@ -419,6 +438,8 @@ function _handleTranscricaoEnter() {
   if (digitado === esperado.toLowerCase()) {
     state.transcriptionIndex++;
     state.userTyped = "";
+    // Acertou: esconde a resposta de novo para a proxima palavra.
+    state.transcriptionRevealed = false;
     if (state.translationElement) state.translationElement.textContent = "";
 
     if (state.transcriptionIndex >= tokens.length) {
@@ -440,6 +461,9 @@ function _handleTranscricaoEnter() {
 
   state.userTyped = "";
   state.hintUsed = true;
+  // Errou: revela a romanizacao da rodada (a resposta) para o jogador
+  // comparar com o que ele leu.
+  state.transcriptionRevealed = true;
   if (state.translationElement) {
     state.translationElement.textContent = "";
   }
@@ -461,15 +485,12 @@ export function displaySyllable() {
     if (state.currentSyllableElement) state.currentSyllableElement.remove();
     if (!_iniciarTranscricao()) return;
 
-    // Elemento onde o jogador ve o que esta digitando.
+    // O texto digitado aparece NA CAIXA de baixo (ver _renderTranscricao),
+    // entao nao criamos o elemento flutuante que os outros modos usam.
+    // Mantemos o elemento de traducao apenas como referencia interna, oculto.
     const translationEl = _createTranslationElement();
-    const syllableEl = _createSyllableElement();
-    syllableEl.style.left = "50%";
-    syllableEl.style.top = "62%";
-    syllableEl.style.transform = "translate(-50%, -50%)";
-    translationEl.style.fontSize = "28px";
-    _appendSyllableToDom(syllableEl, _createQuestionElement(), translationEl);
-    state.questionElement.textContent = "";
+    translationEl.style.display = "none";
+    state.translationElement = translationEl;
     return;
   }
 
@@ -536,6 +557,7 @@ function _resetGameState() {
   // Modo transcricao recomeca do inicio do texto a cada nova partida.
   state.transcriptionTokens = [];
   state.transcriptionIndex = 0;
+  state.transcriptionRevealed = false;
   srs.resetSessionStats();
 }
 
@@ -640,6 +662,8 @@ export function handleKeyInput(key) {
   if (state.translationElement) {
     state.translationElement.textContent = state.userTyped;
   }
+  // Modo transcricao: a caixa de baixo e o campo de digitacao.
+  if (state.transcriptionModeEnabled) _renderTranscricao();
 }
 
 export function handleBackspace() {
@@ -648,6 +672,8 @@ export function handleBackspace() {
   if (state.translationElement) {
     state.translationElement.textContent = state.userTyped;
   }
+  // Modo transcricao: a caixa de baixo e o campo de digitacao.
+  if (state.transcriptionModeEnabled) _renderTranscricao();
 }
 
 export function handleVoiceRepeat() {

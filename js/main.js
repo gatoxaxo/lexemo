@@ -420,9 +420,11 @@ function _handleKeyPress(e) {
   if (isModalOpen()) return;
   if (state.pronunciationModeEnabled) return;
 
-  // Modo transcricao nao depende de card: o alvo vem do texto colado.
+  // Modo transcricao nao usa card: o alvo vem do texto colado.
   if (state.transcriptionModeEnabled) {
-    if (e.key === "Enter" || e.key === "Backspace") return;
+    // Espaco NAO entra no texto: ele vale como Enter (confirma a palavra e
+    // pula para a proxima). Por isso tambem e barrado aqui, no keypress.
+    if (e.key === "Enter" || e.key === "Backspace" || e.key === " ") return;
     game.handleKeyInput(e.key.toLowerCase());
     return;
   }
@@ -469,7 +471,11 @@ function _handleKeyDown(e) {
       game.handleBackspace();
       return;
     }
-    if (e.key === "Enter") {
+    // Enter e Espaco confirmam a palavra e avancam. Espaco acelera o fluxo:
+    // no modo transcricao a palavra e uma unidade, entao separar por espaco e
+    // o gesto natural (as palavras do texto ja sao separadas por espaco).
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
       _handleKeyEnter();
       return;
     }

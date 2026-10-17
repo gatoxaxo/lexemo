@@ -62,6 +62,8 @@ export const state = {
   // Progresso da rodada: lista de tokens e indice da palavra atual.
   transcriptionTokens: [],
   transcriptionIndex: 0,
+  // A romanizacao (resposta) so aparece depois de um erro na rodada.
+  transcriptionRevealed: false,
   // Dados da rodada atual do modo silaba (calculados em game.js).
   syllableParts: [],
   syllableHighlightIndex: -1,

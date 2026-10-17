@@ -809,6 +809,35 @@ body.dark-mode .modal-content select {
   text-underline-offset: 4px;
 }
 
+/* Campo de digitacao: herda o estilo da caixa e ganha um cursor visivel.
+   Fica com altura minima para o jogador ver onde esta escrevendo antes de
+   digitar a primeira letra. */
+#transcriptionTargetText {
+  min-height: 1.6em;
+  color: var(--text-main);
+}
+
+#transcriptionTargetText:empty::after {
+  content: "_";
+  opacity: 0.35;
+  animation: transcription-caret 1s steps(2, start) infinite;
+}
+
+@keyframes transcription-caret {
+  50% { opacity: 0; }
+}
+
+/* Romanizacao esperada: so aparece depois de um erro na rodada. */
+.transcription-revealed {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--glass-border);
+  font-size: 17px;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--text-main) 60%, #ff5252);
+  word-break: break-word;
+}
+
 #transcriptionModeSettingsDiv {
   display: block;
 }

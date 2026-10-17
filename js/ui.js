@@ -85,6 +85,8 @@ export const dom = {
   transcriptionBoxes: document.getElementById("transcriptionBoxes"),
   transcriptionSourceText: document.getElementById("transcriptionSourceText"),
   transcriptionTargetText: document.getElementById("transcriptionTargetText"),
+  transcriptionTargetBox: document.getElementById("transcriptionTargetBox"),
+  transcriptionRevealedText: document.getElementById("transcriptionRevealedText"),
   repeatAudioShortcut: document.getElementById("repeatAudioShortcut"),
   repeatAudioSeparator: document.getElementById("repeatAudioSeparator"),
   gameSpeedInput: document.getElementById("gameSpeedInput"),

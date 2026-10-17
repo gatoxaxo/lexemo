@@ -495,7 +495,9 @@
       </div>
 
       <!-- Modo transcricao: duas caixas no centro da tela.
-           Em cima o texto em russo, embaixo a romanizacao esperada. -->
+           Em cima o texto em russo; embaixo o que o jogador digita.
+           A romanizacao esperada so aparece dentro da caixa de baixo depois
+           que ele erra (classe transcription-revealed). -->
       <div id="transcriptionBoxes" style="display: none;">
         <div class="transcription-box" id="transcriptionSourceBox">
           <div class="transcription-box-label" data-i18n="TRANSCRIPTION_SOURCE_LABEL"></div>
@@ -504,6 +506,7 @@
         <div class="transcription-box" id="transcriptionTargetBox">
           <div class="transcription-box-label" data-i18n="TRANSCRIPTION_TARGET_LABEL"></div>
           <div class="transcription-box-content" id="transcriptionTargetText"></div>
+          <div class="transcription-revealed" id="transcriptionRevealedText" style="display: none;"></div>
         </div>
       </div>
 
