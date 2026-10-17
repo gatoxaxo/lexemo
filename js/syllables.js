@@ -2,7 +2,7 @@
 // Sem DOM e sem estado global - toda funcao recebe e devolve dados.
 //
 // A romanizacao segue EXATAMENTE o gabarito do projeto (96 pares conferidos):
-//   ш=sh  ч=ch  ц=ts  х=k  ж=j  щ=shch
+//   ш=sh  ч=ch  ц=ts  х=k  ж=j  щ=sh
 //   и=й=ы=i   ь=ъ=(vazio)   ю=iu  я=ia   е=э=ё=e
 //   demais letras = equivalente latino
 
@@ -13,7 +13,7 @@ const ROMANO = {
   а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "j",
   з: "z", и: "i", й: "i", к: "k", л: "l", м: "m", н: "n", о: "o",
   п: "p", р: "r", с: "s", т: "t", у: "u", ф: "f", х: "k", ц: "ts",
-  ч: "ch", ш: "sh", щ: "shch", ъ: "", ы: "i", ь: "", э: "e",
+  ч: "ch", ш: "sh", щ: "sh", ъ: "", ы: "i", ь: "", э: "e",
   ю: "iu", я: "ia",
 };
 
