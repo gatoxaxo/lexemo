@@ -417,12 +417,16 @@ function _renderTranscricao() {
   const revelado = dom.transcriptionRevealedText;
   if (revelado) {
     if (state.transcriptionRevealed) {
-      // Mostra a palavra que o jogador ERROU (guardada no momento do erro),
-      // nao a do indice atual: ao recomecar o texto o indice volta a 0 e
-      // revelar a primeira palavra nao ajudaria em nada.
+      // No erro, mostra a PALAVRA EM RUSSO que o jogador errou - nao a
+      // romanizacao. O objetivo e treinar a leitura, entao a resposta
+      // romanizada deve continuar sendo trabalho dele; o que ajuda e ver de
+      // novo a palavra que ele leu errado (e nao entregar a transliteracao).
+      //
+      // Usa o indice guardado no erro, porque ao recomecar o texto o cursor
+      // volta para 0 e revelar a primeira palavra nao diz nada sobre o erro.
       const iFalha = state.transcriptionFailedIndex;
       const alvo = iFalha >= 0 && tokens[iFalha] ? tokens[iFalha] : tokens[idx];
-      revelado.textContent = alvo ? alvo.romanizado : "";
+      revelado.textContent = alvo ? alvo.original : "";
       revelado.style.display = "block";
     } else {
       revelado.textContent = "";
@@ -458,6 +462,24 @@ function _handleTranscricaoEnter() {
 export function handleTranscricaoKey(key) {
   const tokens = state.transcriptionTokens;
   if (!state.transcriptionModeEnabled || tokens.length === 0) return false;
+
+  // Ja errou e ainda nao recomecou: as teclas restantes da rajada de digitacao
+  // NAO podem ser reavaliadas, senao sobrescrevem o indice da palavra errada
+  // (o cursor ja voltou para o inicio e o jogador veria a primeira palavra).
+  // Ignoramos tudo ate ele digitar a primeira letra CORRETA da palavra atual.
+  if (state.transcriptionRevealed) {
+    const esperadoAtual = tokens[state.transcriptionIndex].romanizado.toLowerCase();
+    if (key !== esperadoAtual[0]) {
+      return true; // consome sem efeito: ainda na esteira do erro
+    }
+    // Recomecou de verdade: limpa a revelacao e segue o fluxo normal.
+    state.transcriptionRevealed = false;
+    state.transcriptionFailedIndex = -1;
+    if (dom.transcriptionRevealedText) {
+      dom.transcriptionRevealedText.textContent = "";
+      dom.transcriptionRevealedText.style.display = "none";
+    }
+  }
 
   // Espaco nativo do teclado separa palavras. Como a palavra ja avanca sozinha
   // ao ser completada, um espaco logo depois de completar e apenas o reflexo
