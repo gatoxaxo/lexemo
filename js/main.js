@@ -422,10 +422,10 @@ function _handleKeyPress(e) {
 
   // Modo transcricao nao usa card: o alvo vem do texto colado.
   if (state.transcriptionModeEnabled) {
-    // Espaco NAO entra no texto: ele vale como Enter (confirma a palavra e
-    // pula para a proxima). Por isso tambem e barrado aqui, no keypress.
+    // Enter, Espaco e Backspace sao tratados no keydown (que faz
+    // preventDefault). Aqui so passam as letras.
     if (e.key === "Enter" || e.key === "Backspace" || e.key === " ") return;
-    game.handleKeyInput(e.key.toLowerCase());
+    game.handleTranscricaoKey(e.key);
     return;
   }
 
@@ -471,12 +471,17 @@ function _handleKeyDown(e) {
       game.handleBackspace();
       return;
     }
-    // Enter e Espaco confirmam a palavra e avancam. Espaco acelera o fluxo:
-    // no modo transcricao a palavra e uma unidade, entao separar por espaco e
-    // o gesto natural (as palavras do texto ja sao separadas por espaco).
-    if (e.key === "Enter" || e.key === " ") {
+    // Espaco vai pelo MESMO caminho das letras: a validacao e letra a letra, e
+    // espaco e um caso tratado dentro do modo (separador ignorado ou erro por
+    // palavra incompleta). Roteado aqui apenas para poder fazer preventDefault
+    // e nao rolar a pagina.
+    if (e.key === " ") {
       e.preventDefault();
-      _handleKeyEnter();
+      game.handleTranscricaoKey(" ");
+      return;
+    }
+    if (e.key === "Enter") {
+      game.handleFreeModeEnter();
       return;
     }
     return;

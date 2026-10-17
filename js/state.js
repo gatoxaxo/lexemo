@@ -67,6 +67,9 @@ export const state = {
   // Indice da palavra que o jogador ERROU (-1 = nenhuma). Guardado porque o
   // cursor pode voltar para o inicio do texto antes de revelar a resposta.
   transcriptionFailedIndex: -1,
+  // A palavra acabou de ser completada. Serve para ignorar o espaco que o
+  // jogador digita logo depois, separando palavras (nao e erro).
+  transcriptionJustAdvanced: false,
   // Dados da rodada atual do modo silaba (calculados em game.js).
   syllableParts: [],
   syllableHighlightIndex: -1,

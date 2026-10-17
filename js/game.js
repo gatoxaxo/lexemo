@@ -432,54 +432,113 @@ function _renderTranscricao() {
 }
 
 // Resultado digitado pelo jogador no modo transcricao.
-// Compara a palavra atual; ao acertar avanca, ao completar ganha a partida.
+//
+// A validacao e LETRA A LETRA (ver _handleTranscricaoKey). Enter/Espaco aqui
+// so confirmam a palavra JA validada - servem para avancar quando a palavra
+// terminou, e nao mais para comparar o texto inteiro de uma vez.
 function _handleTranscricaoEnter() {
   const tokens = state.transcriptionTokens;
   if (tokens.length === 0) return;
 
   const esperado = tokens[state.transcriptionIndex].romanizado;
-  const digitado = String(state.userTyped).trim().toLowerCase();
+  const digitado = String(state.userTyped).toLowerCase();
 
+  // Palavra completa: avanca. Incompleta: conta como erro (o jogador pulou
+  // letra ou apertou espaco antes de terminar).
   if (digitado === esperado.toLowerCase()) {
-    state.transcriptionIndex++;
-    state.userTyped = "";
-    // Acertou: esconde a resposta de novo para a proxima palavra.
-    state.transcriptionRevealed = false;
-    state.transcriptionFailedIndex = -1;
-    if (state.translationElement) state.translationElement.textContent = "";
+    _avancarTranscricao();
+  } else {
+    _errarTranscricao();
+  }
+}
 
-    if (state.transcriptionIndex >= tokens.length) {
-      _renderTranscricao();
-      showCongrats(false, startGame);
-      return;
+// Processa UMA tecla no modo transcricao. Compara com a proxima letra
+// esperada; se bater, aceita; se nao bater, erra na hora.
+// Retorna true se a tecla foi consumida pelo modo.
+export function handleTranscricaoKey(key) {
+  const tokens = state.transcriptionTokens;
+  if (!state.transcriptionModeEnabled || tokens.length === 0) return false;
+
+  // Espaco nativo do teclado separa palavras. Como a palavra ja avanca sozinha
+  // ao ser completada, um espaco logo depois de completar e apenas o reflexo
+  // de quem separa palavras ao digitar - nao pode virar erro na palavra que
+  // acabou de aparecer. Ignoramos espaco quando o campo esta vazio (nada foi
+  // digitado ainda nesta palavra) ou quando a palavra anterior acabou de ser
+  // concluida (transcriptionJustAdvanced).
+  if (key === " ") {
+    if (state.transcriptionJustAdvanced || state.userTyped.length === 0) {
+      state.transcriptionJustAdvanced = false;
+      return true;
     }
+    _handleTranscricaoEnter();
+    return true;
+  }
 
+  state.transcriptionJustAdvanced = false;
+
+  const esperado = tokens[state.transcriptionIndex].romanizado.toLowerCase();
+  const pos = state.userTyped.length;
+
+  // Ja terminou a palavra (nao deveria chegar aqui): confirma.
+  if (pos >= esperado.length) {
+    _handleTranscricaoEnter();
+    return true;
+  }
+
+  const letraEsperada = esperado[pos];
+  if (key.toLowerCase() !== letraEsperada) {
+    // Errou esta letra: nao aceita a tecla, dispara o erro.
+    _errarTranscricao();
+    return true;
+  }
+
+  state.userTyped += key;
+  if (!state.firstKeyTime) state.firstKeyTime = Date.now();
+
+  // Ultima letra da palavra: avanca automaticamente, sem precisar de espaco.
+  if (state.userTyped.length === esperado.length) {
+    _avancarTranscricao();
+    return true;
+  }
+
+  _renderTranscricao();
+  return true;
+}
+
+function _avancarTranscricao() {
+  const tokens = state.transcriptionTokens;
+
+  state.transcriptionIndex++;
+  state.userTyped = "";
+  state.transcriptionRevealed = false;
+  state.transcriptionFailedIndex = -1;
+  // Marca que a palavra foi completada agora: um espaco logo a seguir e
+  // apenas o separador natural entre palavras, nao erro.
+  state.transcriptionJustAdvanced = true;
+  if (state.translationElement) state.translationElement.textContent = "";
+
+  if (state.transcriptionIndex >= tokens.length) {
     _renderTranscricao();
+    showCongrats(false, startGame);
     return;
   }
 
-  // Errou: volta conforme o escopo escolhido.
-  //
-  // DEFEITO REAL: o indice era zerado ANTES de renderizar, entao a revelacao
-  // mostrava a romanizacao da PRIMEIRA palavra do texto em vez da palavra que
-  // o jogador realmente errou - justamente a informacao util para corrigir.
-  // Por isso guardamos o indice que falhou antes de reposicionar o cursor.
+  _renderTranscricao();
+}
+
+function _errarTranscricao() {
+  // Guarda o indice que falhou ANTES de reposicionar o cursor, para a
+  // revelacao mostrar a palavra realmente errada (e nao a do inicio do texto).
   state.transcriptionFailedIndex = state.transcriptionIndex;
 
-  if (state.transcriptionResetScope === "word") {
-    // Mantem o indice; o jogador repete a palavra atual.
-  } else {
+  if (state.transcriptionResetScope !== "word") {
     state.transcriptionIndex = 0;
   }
 
   state.userTyped = "";
   state.hintUsed = true;
-  // Errou: revela a romanizacao da rodada (a resposta) para o jogador
-  // comparar com o que ele leu.
   state.transcriptionRevealed = true;
-  if (state.translationElement) {
-    state.translationElement.textContent = "";
-  }
+  if (state.translationElement) state.translationElement.textContent = "";
   if (state.wrongSoundEnabled) {
     wrongSound.currentTime = 0;
     wrongSound.play();
