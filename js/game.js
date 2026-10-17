@@ -257,12 +257,32 @@ function _getTargetText() {
 function _isTargetMatch(typed) {
   const target = _getTargetText();
 
+  // Modo silaba: basta o texto digitar CONTER a romanizacao da silaba.
+  // O jogador esta lendo a palavra inteira (a silaba aparece no meio dela),
+  // entao e natural digitar a palavra toda - "pala" para a silaba "la" vale.
+  // Exigir igualdade exata punia quem leu certo mas romanizou a palavra toda.
   if (state.syllableModeEnabled) {
-    return typed === target;
+    return _contemSilaba(typed, target);
   }
 
   if (typed === target) return true;
   return state.reverseModeEnabled && typed === state.currentSyllable.answer;
+}
+
+// O texto digitado contem a romanizacao da silaba?
+// Compara sem acento/caixa e sem espacos, para "Pala", "pála" e "pa la" valerem
+// para a silaba "la". Alvo vazio nunca casa (evita acerto de graca).
+function _contemSilaba(typed, alvo) {
+  const normalizar = (s) =>
+    String(s)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/\s+/g, "");
+
+  const alvoNorm = normalizar(alvo);
+  if (!alvoNorm) return false;
+  return normalizar(typed).includes(alvoNorm);
 }
 
 // Sorteia a silaba da rodada.
