@@ -377,6 +377,7 @@ function _iniciarTranscricao() {
   state.transcriptionTokens = tokens;
   state.transcriptionIndex = 0;
   state.transcriptionRevealed = false;
+  state.transcriptionFailedIndex = -1;
   _renderTranscricao();
   return tokens.length > 0;
 }
@@ -416,8 +417,12 @@ function _renderTranscricao() {
   const revelado = dom.transcriptionRevealedText;
   if (revelado) {
     if (state.transcriptionRevealed) {
-      const esperado = tokens[idx] ? tokens[idx].romanizado : "";
-      revelado.textContent = esperado;
+      // Mostra a palavra que o jogador ERROU (guardada no momento do erro),
+      // nao a do indice atual: ao recomecar o texto o indice volta a 0 e
+      // revelar a primeira palavra nao ajudaria em nada.
+      const iFalha = state.transcriptionFailedIndex;
+      const alvo = iFalha >= 0 && tokens[iFalha] ? tokens[iFalha] : tokens[idx];
+      revelado.textContent = alvo ? alvo.romanizado : "";
       revelado.style.display = "block";
     } else {
       revelado.textContent = "";
@@ -440,6 +445,7 @@ function _handleTranscricaoEnter() {
     state.userTyped = "";
     // Acertou: esconde a resposta de novo para a proxima palavra.
     state.transcriptionRevealed = false;
+    state.transcriptionFailedIndex = -1;
     if (state.translationElement) state.translationElement.textContent = "";
 
     if (state.transcriptionIndex >= tokens.length) {
@@ -453,6 +459,13 @@ function _handleTranscricaoEnter() {
   }
 
   // Errou: volta conforme o escopo escolhido.
+  //
+  // DEFEITO REAL: o indice era zerado ANTES de renderizar, entao a revelacao
+  // mostrava a romanizacao da PRIMEIRA palavra do texto em vez da palavra que
+  // o jogador realmente errou - justamente a informacao util para corrigir.
+  // Por isso guardamos o indice que falhou antes de reposicionar o cursor.
+  state.transcriptionFailedIndex = state.transcriptionIndex;
+
   if (state.transcriptionResetScope === "word") {
     // Mantem o indice; o jogador repete a palavra atual.
   } else {
@@ -558,6 +571,7 @@ function _resetGameState() {
   state.transcriptionTokens = [];
   state.transcriptionIndex = 0;
   state.transcriptionRevealed = false;
+  state.transcriptionFailedIndex = -1;
   srs.resetSessionStats();
 }
 

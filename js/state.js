@@ -64,6 +64,9 @@ export const state = {
   transcriptionIndex: 0,
   // A romanizacao (resposta) so aparece depois de um erro na rodada.
   transcriptionRevealed: false,
+  // Indice da palavra que o jogador ERROU (-1 = nenhuma). Guardado porque o
+  // cursor pode voltar para o inicio do texto antes de revelar a resposta.
+  transcriptionFailedIndex: -1,
   // Dados da rodada atual do modo silaba (calculados em game.js).
   syllableParts: [],
   syllableHighlightIndex: -1,
