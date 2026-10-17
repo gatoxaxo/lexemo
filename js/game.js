@@ -363,9 +363,118 @@ function _appendSyllableToDom(syllableEl, questionEl, translationEl) {
   dom.gameArea.appendChild(syllableEl);
 }
 
+// --- Modo transcricao ------------------------------------------------------
+// O jogador romaniza um TEXTO colado nas configuracoes do deck. A tela mostra
+// duas caixas: o texto em russo (estimulo) e a romanizacao esperada.
+// Regras:
+//  - pontuacao/linhas/espacos sao ignorados ao montar os tokens;
+//  - o jogador digita a palavra inteira e ela e comparada no Enter;
+//  - errou: reinicia do inicio do TEXTO ou da PALAVRA, conforme a opcao;
+//  - acertou todas: partida ganha.
+
+function _iniciarTranscricao() {
+  const tokens = syllables.tokenizarTranscricao(state.transcriptionText);
+  state.transcriptionTokens = tokens;
+  state.transcriptionIndex = 0;
+  _renderTranscricao();
+  return tokens.length > 0;
+}
+
+// Renderiza as duas caixas. A palavra atual fica destacada nas duas, para o
+// jogador saber exatamente onde esta.
+function _renderTranscricao() {
+  if (!dom.transcriptionBoxes) return;
+
+  const tokens = state.transcriptionTokens;
+  const idx = state.transcriptionIndex;
+  const mostrar = state.transcriptionModeEnabled && tokens.length > 0;
+
+  dom.transcriptionBoxes.style.display = mostrar ? "flex" : "none";
+  if (!mostrar) return;
+
+  const montar = (container, campo) => {
+    container.textContent = "";
+    tokens.forEach((tok, i) => {
+      const span = document.createElement("span");
+      span.textContent = tok[campo] + " ";
+      if (i < idx) span.classList.add("transcription-done");
+      else if (i === idx) span.classList.add("transcription-current");
+      container.appendChild(span);
+    });
+  };
+
+  montar(dom.transcriptionSourceText, "original");
+  montar(dom.transcriptionTargetText, "romanizado");
+}
+
+// Resultado digitado pelo jogador no modo transcricao.
+// Compara a palavra atual; ao acertar avanca, ao completar ganha a partida.
+function _handleTranscricaoEnter() {
+  const tokens = state.transcriptionTokens;
+  if (tokens.length === 0) return;
+
+  const esperado = tokens[state.transcriptionIndex].romanizado;
+  const digitado = String(state.userTyped).trim().toLowerCase();
+
+  if (digitado === esperado.toLowerCase()) {
+    state.transcriptionIndex++;
+    state.userTyped = "";
+    if (state.translationElement) state.translationElement.textContent = "";
+
+    if (state.transcriptionIndex >= tokens.length) {
+      _renderTranscricao();
+      showCongrats(false, startGame);
+      return;
+    }
+
+    _renderTranscricao();
+    return;
+  }
+
+  // Errou: volta conforme o escopo escolhido.
+  if (state.transcriptionResetScope === "word") {
+    // Mantem o indice; o jogador repete a palavra atual.
+  } else {
+    state.transcriptionIndex = 0;
+  }
+
+  state.userTyped = "";
+  state.hintUsed = true;
+  if (state.translationElement) {
+    state.translationElement.textContent = "";
+  }
+  if (state.wrongSoundEnabled) {
+    wrongSound.currentTime = 0;
+    wrongSound.play();
+  }
+  _renderTranscricao();
+}
+
 
 export function displaySyllable() {
   _setupSyllable();
+
+  // Modo transcricao nao usa cards: trabalha sobre o texto colado. Tem
+  // caminho proprio para nao precisar de deck com conteudo.
+  if (state.transcriptionModeEnabled) {
+    dom.contextHintBox.style.display = "none";
+    if (state.currentSyllableElement) state.currentSyllableElement.remove();
+    if (!_iniciarTranscricao()) return;
+
+    // Elemento onde o jogador ve o que esta digitando.
+    const translationEl = _createTranslationElement();
+    const syllableEl = _createSyllableElement();
+    syllableEl.style.left = "50%";
+    syllableEl.style.top = "62%";
+    syllableEl.style.transform = "translate(-50%, -50%)";
+    translationEl.style.fontSize = "28px";
+    _appendSyllableToDom(syllableEl, _createQuestionElement(), translationEl);
+    state.questionElement.textContent = "";
+    return;
+  }
+
+  if (dom.transcriptionBoxes) dom.transcriptionBoxes.style.display = "none";
+
   if (!_pickNextCard()) return;
 
   _showContextHint();
@@ -424,12 +533,16 @@ function _resetGameState() {
   state.syllableCoverage = {};
   state.syllableRetryIndex = -1;
   state.syllableRetryQuestion = null;
+  // Modo transcricao recomeca do inicio do texto a cada nova partida.
+  state.transcriptionTokens = [];
+  state.transcriptionIndex = 0;
   srs.resetSessionStats();
 }
 
 function _cleanupGameUI() {
   if (state.currentSyllableElement) state.currentSyllableElement.remove();
   if (state.translationElement) state.translationElement.remove();
+  if (dom.transcriptionBoxes) dom.transcriptionBoxes.style.display = "none";
   dom.contextHintBox.style.display = "none";
 }
 
@@ -475,6 +588,14 @@ export function stopGame() {
 export function startGame() {
   // Always stop any current game first
   stopGame();
+
+  // Modo transcricao nao usa o conteudo do deck: o material vem do texto
+  // colado nas configuracoes. Por isso pode iniciar mesmo sem cards.
+  if (state.transcriptionModeEnabled) {
+    updateScoreDisplay();
+    displaySyllable();
+    return;
+  }
 
   if (!state.syllableList || state.syllableList.length === 0) {
     if (state.isLevelSkipActive) {
@@ -825,6 +946,13 @@ function _deleteCurrentCardLogic() {
 }
 
 export function handleFreeModeEnter() {
+  // Modo transcricao tem fluxo proprio: compara palavra a palavra do texto
+  // colado, nao o par question/answer de um card.
+  if (state.transcriptionModeEnabled) {
+    _handleTranscricaoEnter();
+    return;
+  }
+
   if (_isTargetMatch(state.userTyped)) {
     _handleFreeModeCorrect();
   } else {

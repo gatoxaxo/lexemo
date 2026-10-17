@@ -91,3 +91,47 @@ export function escolherSilaba(silabas, rng = Math.random) {
   if (!silabas || silabas.length === 0) return -1;
   return Math.floor(rng() * silabas.length);
 }
+
+// --- Modo transcricao ------------------------------------------------------
+// Converte um texto livre em russo numa lista de "tokens" prontos para o
+// jogador romanizar. Cada token guarda o original (para mostrar na caixa de
+// cima) e a romanizacao esperada (para comparar).
+//
+// Regra: IGNORA PONTUACAO, numeros e qualquer simbolo que nao seja letra
+// cirilica ou latina. O exercicio e sobre romanizacao, entao virgula, ponto,
+// travessao, aspas e quebra de linha nao podem contar como erro. Palavras
+// separadas por esses sinais viram tokens independentes, entao o texto pode
+// vir com qualquer formatacao.
+//
+// Caracteres fora do mapa (ex.: nomes em latim, numeros romanos) sao mantidos
+// como estao no token: se o texto misturar "Москва" com "OK", o "OK" vira
+// token com romanizacao "ok" (letras latinas passam direto).
+const LETRA_CIRILICA = /[\u0400-\u04FF]/;
+const LETRA_LATINA = /[a-z]/i;
+
+export function tokenizarTranscricao(texto) {
+  const tokens = [];
+  const bruto = String(texto || "").normalize("NFKC");
+
+  // Quebra em sequencias de letras (cirilicas ou latinas), descartando o resto.
+  const pedacos = bruto.match(/[\u0400-\u04FFa-zA-Z]+/g) || [];
+
+  for (const pedaco of pedacos) {
+    // Um pedaco so entra se tiver pelo menos uma letra; isso ja e garantido
+    // pela regex, mas mantemos a checagem para clareza.
+    const original = pedaco;
+    tokens.push({
+      original,
+      romanizado: romanizar(original),
+    });
+  }
+
+  return tokens;
+}
+
+// O texto tem material suficiente para o exercicio?
+export function transcricaoTemConteudo(texto) {
+  return tokenizarTranscricao(texto).length > 0;
+}
+
+export { LETRA_CIRILICA, LETRA_LATINA };

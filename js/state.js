@@ -52,6 +52,16 @@ export const state = {
   reverseModeEnabled: false,  // Modo silaba: mostra a palavra russa com UMA silaba aleatoria destacada e
   // o jogador digita a romanizacao dessa silaba (ver js/syllables.js).
   syllableModeEnabled: false,
+  // Modo transcricao: o jogador romaniza um TEXTO colado nas configuracoes.
+  // Ignora pontuacao; erro reinicia do inicio (do texto ou da palavra,
+  // conforme transcriptionResetScope).
+  transcriptionModeEnabled: false,
+  transcriptionText: "",
+  // "text" = erro volta ao inicio do texto; "word" = volta a palavra atual.
+  transcriptionResetScope: "text",
+  // Progresso da rodada: lista de tokens e indice da palavra atual.
+  transcriptionTokens: [],
+  transcriptionIndex: 0,
   // Dados da rodada atual do modo silaba (calculados em game.js).
   syllableParts: [],
   syllableHighlightIndex: -1,

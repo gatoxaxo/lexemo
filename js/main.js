@@ -338,6 +338,7 @@ function _initDeckSettingsListeners() {
     dom.modeSrsToggle,
     dom.modePronunciationToggle,
     dom.modeTimerToggle,
+    dom.modeTranscriptionToggle,
   ];
   modeToggles.forEach((toggle) =>
     toggle.addEventListener("click", (e) => {
@@ -357,6 +358,9 @@ function _initDeckSettingsListeners() {
 function _handleKeyEnter() {
   if (state.pronunciationModeEnabled) {
     game.handlePronunciationEnter();
+  } else if (state.transcriptionModeEnabled) {
+    // Modo transcricao nao grava nada no deck (nao ha SRS nem card).
+    game.handleFreeModeEnter();
   } else if (state.evaluativeModeEnabled) {
     game.handleSrsEnter();
     deckManager.saveDecks();
@@ -415,6 +419,14 @@ function _handleHoldEnd() {
 function _handleKeyPress(e) {
   if (isModalOpen()) return;
   if (state.pronunciationModeEnabled) return;
+
+  // Modo transcricao nao depende de card: o alvo vem do texto colado.
+  if (state.transcriptionModeEnabled) {
+    if (e.key === "Enter" || e.key === "Backspace") return;
+    game.handleKeyInput(e.key.toLowerCase());
+    return;
+  }
+
   if (!state.currentSyllable || !state.currentSyllable.answer) return;
 
   if (e.key === "Enter" || e.key === "Backspace") {
@@ -446,6 +458,20 @@ function _handleKeyDown(e) {
     e.preventDefault();
     if (!state.timerModeEnabled) {
       game.handleDeleteCurrentCardRequest();
+    }
+    return;
+  }
+
+  // Modo transcricao nao usa card (`currentSyllable` nunca e setado), entao
+  // precisa tratar Backspace/Enter ANTES do guard que exige um card.
+  if (state.transcriptionModeEnabled) {
+    if (e.key === "Backspace") {
+      game.handleBackspace();
+      return;
+    }
+    if (e.key === "Enter") {
+      _handleKeyEnter();
+      return;
     }
     return;
   }

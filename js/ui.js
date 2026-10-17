@@ -78,6 +78,13 @@ export const dom = {
   modeSrsToggle: document.getElementById("modeSrsToggle"),
   modePronunciationToggle: document.getElementById("modePronunciationToggle"),
   modeTimerToggle: document.getElementById("modeTimerToggle"),
+  modeTranscriptionToggle: document.getElementById("modeTranscriptionToggle"),
+  transcriptionModeSettingsDiv: document.getElementById("transcriptionModeSettingsDiv"),
+  transcriptionTextInput: document.getElementById("transcriptionTextInput"),
+  transcriptionResetScopeSelect: document.getElementById("transcriptionResetScopeSelect"),
+  transcriptionBoxes: document.getElementById("transcriptionBoxes"),
+  transcriptionSourceText: document.getElementById("transcriptionSourceText"),
+  transcriptionTargetText: document.getElementById("transcriptionTargetText"),
   repeatAudioShortcut: document.getElementById("repeatAudioShortcut"),
   repeatAudioSeparator: document.getElementById("repeatAudioSeparator"),
   gameSpeedInput: document.getElementById("gameSpeedInput"),
@@ -195,9 +202,11 @@ export function updateModeSettingsVisibility() {
   const isFree = dom.modeFreeToggle.checked;
   const isTimer = dom.modeTimerToggle.checked;
   const isSrs = dom.modeSrsToggle.checked;
+  const isTranscription = dom.modeTranscriptionToggle.checked;
 
   dom.freeModeSettingsDiv.style.display = isFree || isTimer ? "block" : "none";
   dom.srsModeSettingsDiv.style.display = isSrs ? "block" : "none";
+  dom.transcriptionModeSettingsDiv.style.display = isTranscription ? "block" : "none";
   
   const gameSpeedGroup = document.getElementById("gameSpeedGroup");
   if (gameSpeedGroup) gameSpeedGroup.style.display = isTimer ? "flex" : "none";

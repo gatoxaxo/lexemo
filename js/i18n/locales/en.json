@@ -91,6 +91,14 @@
     "NEW_CARDS_LIMIT": "New Cards Limit",
     "HEARING_MODE": "Hearing Mode",
     "REVERSE_MODE": "Reverse Mode",
-    "SYLLABLE_MODE": "Syllable Mode"
+    "SYLLABLE_MODE": "Syllable Mode",
+    "TRANSCRIPTION": "Transcription",
+    "TRANSCRIPTION_TEXT": "Text to romanize",
+    "TRANSCRIPTION_TEXT_PLACEHOLDER": "Paste a Russian text here. Punctuation is ignored.",
+    "TRANSCRIPTION_RESET_SCOPE": "On error, restart from",
+    "TRANSCRIPTION_RESET_TEXT": "Start of text",
+    "TRANSCRIPTION_RESET_WORD": "Current word",
+    "TRANSCRIPTION_SOURCE_LABEL": "Russian",
+    "TRANSCRIPTION_TARGET_LABEL": "Romanized"
 }
 

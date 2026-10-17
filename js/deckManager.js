@@ -62,6 +62,9 @@ export function applyDeckSettingsToGame(settings, onCompleteCallback) {
   state.hearingModeEnabled = settings.hearingModeEnabled ?? false;
   state.reverseModeEnabled = settings.reverseModeEnabled ?? false;
   state.syllableModeEnabled = settings.syllableModeEnabled ?? false;
+  state.transcriptionModeEnabled = settings.transcriptionModeEnabled ?? false;
+  state.transcriptionText = settings.transcriptionText ?? "";
+  state.transcriptionResetScope = settings.transcriptionResetScope ?? "text";
   state.timerModeEnabled = settings.timerModeEnabled ?? false;
 
   state.targetRetention = settings.targetRetention ?? 0.9;
@@ -173,6 +176,9 @@ export function getDefaultSettings() {
     hearingModeEnabled: false,
     reverseModeEnabled: false,
     syllableModeEnabled: false,
+    transcriptionModeEnabled: false,
+    transcriptionText: "",
+    transcriptionResetScope: "text",
     timerModeEnabled: false,
 
     voiceIndex: "none",
@@ -205,7 +211,14 @@ export function applySettingsToModalUI(settings) {
   dom.modeSrsToggle.checked = s.evaluativeModeEnabled;
   dom.modePronunciationToggle.checked = pMode;
   dom.modeTimerToggle.checked = s.timerModeEnabled;
-  dom.modeFreeToggle.checked = !s.evaluativeModeEnabled && !pMode && !s.timerModeEnabled;
+  dom.modeTranscriptionToggle.checked = s.transcriptionModeEnabled;
+  dom.transcriptionTextInput.value = s.transcriptionText || "";
+  dom.transcriptionResetScopeSelect.value = s.transcriptionResetScope || "text";
+  dom.modeFreeToggle.checked =
+    !s.evaluativeModeEnabled &&
+    !pMode &&
+    !s.timerModeEnabled &&
+    !s.transcriptionModeEnabled;
 
   updateModeSettingsVisibility();
 
@@ -224,7 +237,22 @@ export function applySettingsToModalUI(settings) {
     }
 
     dom.modePronunciationToggle.checked = pModeDelayed;
-    dom.modeFreeToggle.checked = !s.evaluativeModeEnabled && !pModeDelayed && !s.timerModeEnabled;
+    // DEFEITO REAL: este setTimeout reaplicava as settings ANTIGAS (`s`),
+    // desfazendo o que o usuario tinha acabado de clicar nos checkboxes de
+    // modo. Resultado: marcar "Transcricao" deixava "Free" tambem marcado.
+    // O atraso existe apenas para esperar as vozes carregarem, entao so o
+    // estado da PRONUNCIA deve ser recalculado aqui - os outros modos ficam
+    // como estao na UI.
+    if (pModeDelayed) {
+      dom.modeFreeToggle.checked = false;
+      dom.modeSrsToggle.checked = false;
+      dom.modeTimerToggle.checked = false;
+      dom.modeTranscriptionToggle.checked = false;
+    } else if (!dom.modeSrsToggle.checked &&
+               !dom.modeTimerToggle.checked &&
+               !dom.modeTranscriptionToggle.checked) {
+      dom.modeFreeToggle.checked = true;
+    }
 
     updateModeSettingsVisibility();
   }, 200);
@@ -242,6 +270,9 @@ function readSettingsFromUI() {
     hearingModeEnabled: dom.hearingModeToggle.checked,
     reverseModeEnabled: dom.reverseModeToggle.checked,
     syllableModeEnabled: dom.syllableModeToggle.checked,
+    transcriptionModeEnabled: dom.modeTranscriptionToggle.checked,
+    transcriptionText: dom.transcriptionTextInput.value,
+    transcriptionResetScope: dom.transcriptionResetScopeSelect.value,
     timerModeEnabled: dom.modeTimerToggle.checked,
 
     gameSpeed: parseInt(dom.gameSpeedInput.value, 10) || 1,

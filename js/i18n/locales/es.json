@@ -91,5 +91,13 @@
     "NEW_CARDS_LIMIT": "Límite de cartas nuevas",
     "HEARING_MODE": "Modo de audición",
     "REVERSE_MODE": "Modo inverso",
-    "SYLLABLE_MODE": "Modo sílaba"
+    "SYLLABLE_MODE": "Modo sílaba",
+    "TRANSCRIPTION": "Transcripción",
+    "TRANSCRIPTION_TEXT": "Texto para romanizar",
+    "TRANSCRIPTION_TEXT_PLACEHOLDER": "Pega un texto en ruso aquí. La puntuación se ignora.",
+    "TRANSCRIPTION_RESET_SCOPE": "Al fallar, reiniciar desde",
+    "TRANSCRIPTION_RESET_TEXT": "Inicio del texto",
+    "TRANSCRIPTION_RESET_WORD": "Palabra actual",
+    "TRANSCRIPTION_SOURCE_LABEL": "Ruso",
+    "TRANSCRIPTION_TARGET_LABEL": "Romanizado"
 }

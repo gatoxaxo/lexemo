@@ -757,6 +757,76 @@ body.dark-mode .modal-content select {
   text-shadow: 0 0 2px currentColor;
 }
 
+/* Modo transcricao: duas caixas empilhadas no centro da tela.
+   Em cima o texto russo (estimulo), embaixo a romanizacao esperada.
+   A palavra atual fica destacada nas duas, e o que ja foi feito fica apagado. */
+#transcriptionBoxes {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(760px, 90vw);
+}
+
+.transcription-box {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+.transcription-box-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.55;
+  margin-bottom: 6px;
+}
+
+.transcription-box-content {
+  font-size: 20px;
+  line-height: 1.6;
+  word-break: break-word;
+  user-select: none;
+}
+
+/* Palavra ja concluida: apagada, para o foco ficar no que falta. */
+.transcription-done {
+  opacity: 0.35;
+}
+
+/* Palavra atual: destacada nas duas caixas. */
+.transcription-current {
+  font-weight: 700;
+  opacity: 1;
+  color: color-mix(in srgb, var(--text-main) 70%, var(--secondary-hsl, #00d4d4));
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+#transcriptionModeSettingsDiv {
+  display: block;
+}
+
+#transcriptionModeSettingsDiv textarea {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 12px;
+  padding: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--glass-border);
+  background: var(--input-bg);
+  color: var(--text-main);
+  resize: vertical;
+}
+
 #scorePanel {
   position: fixed;
   top: 20px;

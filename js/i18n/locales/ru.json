@@ -91,5 +91,13 @@
     "NEW_CARDS_LIMIT": "Лимит новых карточек",
     "HEARING_MODE": "Режим аудирования",
     "REVERSE_MODE": "Обратный режим",
-    "SYLLABLE_MODE": "Режим слогов"
+    "SYLLABLE_MODE": "Режим слогов",
+    "TRANSCRIPTION": "Транскрипция",
+    "TRANSCRIPTION_TEXT": "Текст для романизации",
+    "TRANSCRIPTION_TEXT_PLACEHOLDER": "Вставьте сюда текст на русском. Пунктуация игнорируется.",
+    "TRANSCRIPTION_RESET_SCOPE": "При ошибке начать с",
+    "TRANSCRIPTION_RESET_TEXT": "Начала текста",
+    "TRANSCRIPTION_RESET_WORD": "Текущего слова",
+    "TRANSCRIPTION_SOURCE_LABEL": "Русский",
+    "TRANSCRIPTION_TARGET_LABEL": "Романизация"
 }
