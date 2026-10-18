@@ -27,6 +27,10 @@ The app adapts to you — not the other way around.
 
 - Flashcard-based practice (question → answer)
 - Multiple practice styles (Free, Speed, SRS)
+- Pronunciation mode (speech recognition)
+- Syllable mode (read one highlighted syllable at a time)
+- Transcription mode (romanize or de-romanize a pasted Russian text)
+- Reverse mode (see the answer, type the term)
 - Optional hints
 - Speech recognition for pronunciation practice
 - Text-to-speech
