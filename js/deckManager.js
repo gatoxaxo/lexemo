@@ -65,6 +65,8 @@ export function applyDeckSettingsToGame(settings, onCompleteCallback) {
   state.transcriptionModeEnabled = settings.transcriptionModeEnabled ?? false;
   state.transcriptionInvertedEnabled = settings.transcriptionInvertedEnabled ?? false;
   state.transcriptionHideSourceEnabled = settings.transcriptionHideSourceEnabled ?? false;
+  state.transcriptionKeyboardTrainingEnabled =
+    settings.transcriptionKeyboardTrainingEnabled ?? false;
   state.transcriptionText = settings.transcriptionText ?? "";
   state.transcriptionResetScope = settings.transcriptionResetScope ?? "text";
   state.timerModeEnabled = settings.timerModeEnabled ?? false;
@@ -181,6 +183,7 @@ export function getDefaultSettings() {
     transcriptionModeEnabled: false,
     transcriptionInvertedEnabled: false,
     transcriptionHideSourceEnabled: false,
+    transcriptionKeyboardTrainingEnabled: false,
     transcriptionText: "",
     transcriptionResetScope: "text",
     timerModeEnabled: false,
@@ -220,6 +223,8 @@ export function applySettingsToModalUI(settings) {
   dom.transcriptionResetScopeSelect.value = s.transcriptionResetScope || "text";
   dom.transcriptionInvertedToggle.checked = s.transcriptionInvertedEnabled || false;
   dom.transcriptionHideSourceToggle.checked = s.transcriptionHideSourceEnabled || false;
+  dom.transcriptionKeyboardTrainingToggle.checked =
+    s.transcriptionKeyboardTrainingEnabled || false;
   dom.modeFreeToggle.checked =
     !s.evaluativeModeEnabled &&
     !pMode &&
@@ -279,6 +284,8 @@ function readSettingsFromUI() {
     transcriptionModeEnabled: dom.modeTranscriptionToggle.checked,
     transcriptionInvertedEnabled: dom.transcriptionInvertedToggle.checked,
     transcriptionHideSourceEnabled: dom.transcriptionHideSourceToggle.checked,
+    transcriptionKeyboardTrainingEnabled:
+      dom.transcriptionKeyboardTrainingToggle.checked,
     transcriptionText: dom.transcriptionTextInput.value,
     transcriptionResetScope: dom.transcriptionResetScopeSelect.value,
     timerModeEnabled: dom.modeTimerToggle.checked,

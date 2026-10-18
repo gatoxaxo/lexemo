@@ -103,5 +103,6 @@
   "TRANSCRIPTION_INVERT": "Invert (romanization → Russian)",
   "TRANSCRIPTION_HIDE_SOURCE": "Hide the stimulus box",
   "TRANSCRIPTION_LABEL_RUSSIAN": "Russian",
-  "TRANSCRIPTION_LABEL_ROMANIZED": "Romanization"
+  "TRANSCRIPTION_LABEL_ROMANIZED": "Romanization",
+  "TRANSCRIPTION_KEYBOARD_TRAINING": "Keyboard training (type the Russian you see)"
 }

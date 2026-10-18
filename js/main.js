@@ -363,10 +363,12 @@ function _initDeckSettingsListeners() {
   );
 
   // Opcoes internas do modo transcricao: nao sao modos, so mudam o sentido do
-  // exercicio (inverter) e o que fica visivel na tela (ocultar estimulo).
+  // exercicio (inverter), o que fica visivel na tela (ocultar estimulo) e se o
+  // exercicio e digitacao do layout cirilico (keyboard training).
   [
     dom.transcriptionInvertedToggle,
     dom.transcriptionHideSourceToggle,
+    dom.transcriptionKeyboardTrainingToggle,
   ].forEach((toggle) => {
     if (!toggle) return;
     toggle.addEventListener("click", () => updateModeSettingsVisibility());

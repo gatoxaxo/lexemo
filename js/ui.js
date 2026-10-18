@@ -84,6 +84,9 @@ export const dom = {
   transcriptionResetScopeSelect: document.getElementById("transcriptionResetScopeSelect"),
   transcriptionInvertedToggle: document.getElementById("transcriptionInvertedToggle"),
   transcriptionHideSourceToggle: document.getElementById("transcriptionHideSourceToggle"),
+  transcriptionKeyboardTrainingToggle: document.getElementById(
+    "transcriptionKeyboardTrainingToggle",
+  ),
   transcriptionBoxes: document.getElementById("transcriptionBoxes"),
   transcriptionSourceBox: document.getElementById("transcriptionSourceBox"),
   transcriptionSourceLabel: document.querySelector("#transcriptionSourceBox .transcription-box-label"),
@@ -214,6 +217,23 @@ export function updateModeSettingsVisibility() {
   dom.freeModeSettingsDiv.style.display = isFree || isTimer ? "block" : "none";
   dom.srsModeSettingsDiv.style.display = isSrs ? "block" : "none";
   dom.transcriptionModeSettingsDiv.style.display = isTranscription ? "block" : "none";
+
+  // Keyboard training x Inverter: sao sentidos DIFERENTES do mesmo exercicio e
+  // nao podem valer juntos (um copia o russo, o outro traduz para o russo).
+  // O keyboard training tambem depende de ver o texto de cima, entao ele
+  // desabilita "ocultar estimulo" - sem estimulo nao ha o que copiar.
+  if (dom.transcriptionKeyboardTrainingToggle) {
+    const kt = dom.transcriptionKeyboardTrainingToggle.checked;
+    if (kt) {
+      dom.transcriptionInvertedToggle.checked = false;
+      dom.transcriptionInvertedToggle.disabled = true;
+      dom.transcriptionHideSourceToggle.checked = false;
+      dom.transcriptionHideSourceToggle.disabled = true;
+    } else {
+      dom.transcriptionInvertedToggle.disabled = false;
+      dom.transcriptionHideSourceToggle.disabled = false;
+    }
+  }
   
   const gameSpeedGroup = document.getElementById("gameSpeedGroup");
   if (gameSpeedGroup) gameSpeedGroup.style.display = isTimer ? "flex" : "none";

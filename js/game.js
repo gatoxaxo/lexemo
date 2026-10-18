@@ -386,14 +386,34 @@ function _appendSyllableToDom(syllableEl, questionEl, translationEl) {
 //  - invertido: estimulo = ROMANIZACAO, resposta = RUSSO ("zima" -> "зима").
 // A maquina de digitacao e a MESMA nos dois casos: o que muda e qual campo do
 // token e o estimulo e qual e o alvo.
+//
+// KEYBOARD TRAINING (state.transcriptionKeyboardTrainingEnabled): o estimulo e
+// o texto em RUSSO e a resposta e o MESMO texto em russo. Nao ha traducao nem
+// romanizacao em jogo - o exercicio e reproduzir a grafia no teclado, ou seja,
+// treinar onde cada letra cirilica fica. Por isso ele IGNORA o "inverter"
+// (nao existe outro sentido) e exige o texto de cima visivel (sem estimulo nao
+// ha o que copiar).
+
+// Keyboard training ativo: copia do russo, com o estimulo a mostra.
+function _isKeyboardTraining() {
+  return (
+    state.transcriptionModeEnabled &&
+    state.transcriptionKeyboardTrainingEnabled &&
+    !state.transcriptionHideSourceEnabled
+  );
+}
 
 // Qual campo do token o jogador deve digitar.
 function _campoAlvoTranscricao() {
+  // Keyboard training: a resposta e o proprio russo.
+  if (state.transcriptionKeyboardTrainingEnabled) return "original";
   return state.transcriptionInvertedEnabled ? "original" : "romanizado";
 }
 
 // Qual campo do token e o estimulo (o que aparece na caixa de cima).
 function _campoEstimuloTranscricao() {
+  // Keyboard training: o estimulo tambem e o russo (copiar, nao traduzir).
+  if (state.transcriptionKeyboardTrainingEnabled) return "original";
   return state.transcriptionInvertedEnabled ? "romanizado" : "original";
 }
 
@@ -447,29 +467,30 @@ function _renderTranscricao() {
   // quem oculta o estimulo ainda precisa saber o que deve digitar.
   if (dom.transcriptionTargetLabel) {
     dom.transcriptionTargetLabel.textContent = getTranslation(
-      state.transcriptionInvertedEnabled
+      state.transcriptionInvertedEnabled ||
+        state.transcriptionKeyboardTrainingEnabled
         ? "TRANSCRIPTION_LABEL_RUSSIAN"
         : "TRANSCRIPTION_LABEL_ROMANIZED",
     );
   }
 
+  // No keyboard training as DUAS caixas mostram russo (copiar, nao traduzir),
+  // entao o rotulo de cima nao pode seguir o "inverter".
+  const rotuloEstimulo = state.transcriptionKeyboardTrainingEnabled
+    ? "TRANSCRIPTION_LABEL_RUSSIAN"
+    : state.transcriptionInvertedEnabled
+      ? "TRANSCRIPTION_LABEL_ROMANIZED"
+      : "TRANSCRIPTION_LABEL_RUSSIAN";
+
   if (!esconderEstimulo) {
     montar(dom.transcriptionSourceText, _campoEstimuloTranscricao());
     if (dom.transcriptionSourceLabel) {
-      dom.transcriptionSourceLabel.textContent = getTranslation(
-        state.transcriptionInvertedEnabled
-          ? "TRANSCRIPTION_LABEL_ROMANIZED"
-          : "TRANSCRIPTION_LABEL_RUSSIAN",
-      );
+      dom.transcriptionSourceLabel.textContent = getTranslation(rotuloEstimulo);
     }
   } else if (dom.transcriptionSourceLabel) {
     // Caixa oculta: o rotulo tambem continua coerente, para nao reaparecer
     // desatualizado se o jogador voltar a mostrar o estimulo.
-    dom.transcriptionSourceLabel.textContent = getTranslation(
-      state.transcriptionInvertedEnabled
-        ? "TRANSCRIPTION_LABEL_ROMANIZED"
-        : "TRANSCRIPTION_LABEL_RUSSIAN",
-    );
+    dom.transcriptionSourceLabel.textContent = getTranslation(rotuloEstimulo);
   }
 
   // A caixa de baixo e o CAMPO DE DIGITACAO: mostra o que o jogador esta
@@ -493,11 +514,16 @@ function _renderTranscricao() {
       //    Aqui a resposta E a grafia russa, e ve-la e justamente o objetivo
       //    (aprender a escrever o que se ouve/le em romaji). Revelar a
       //    romanizacao de novo nao ensina nada - ela ja estava na tela.
+      //  - keyboard training: a resposta e o russo, entao revela o russo -
+      //    exatamente o que ele errou ao digitar.
       const iFalha = state.transcriptionFailedIndex;
       const alvo = iFalha >= 0 && tokens[iFalha] ? tokens[iFalha] : tokens[idx];
-      revelado.textContent = alvo
-        ? alvo[state.transcriptionInvertedEnabled ? "original" : "romanizado"]
-        : "";
+      const campoRevelado =
+        state.transcriptionKeyboardTrainingEnabled ||
+        state.transcriptionInvertedEnabled
+          ? "original"
+          : "romanizado";
+      revelado.textContent = alvo ? alvo[campoRevelado] : "";
       revelado.style.display = "block";
     } else {
       revelado.textContent = "";

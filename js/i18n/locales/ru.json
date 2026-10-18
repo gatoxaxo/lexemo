@@ -103,5 +103,6 @@
   "TRANSCRIPTION_INVERT": "Инверсия (романизация → русский)",
   "TRANSCRIPTION_HIDE_SOURCE": "Скрыть поле стимула",
   "TRANSCRIPTION_LABEL_RUSSIAN": "Русский",
-  "TRANSCRIPTION_LABEL_ROMANIZED": "Романизация"
+  "TRANSCRIPTION_LABEL_ROMANIZED": "Романизация",
+  "TRANSCRIPTION_KEYBOARD_TRAINING": "Тренировка клавиатуры (наберите русский текст)"
 }
