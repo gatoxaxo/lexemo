@@ -202,6 +202,21 @@ function _setSyllableText(questionEl) {
     return;
   }
 
+  // Modo pronuncia audivel: nao ha estimulo visual. A palavra e falada (ver
+  // displaySyllable) e o jogador digita o russo do que ouviu.
+  if (_isPronunciationAudioOnly()) {
+    questionEl.textContent = "";
+    return;
+  }
+
+  // Modo pronuncia invertido: o estimulo e a ROMANIZACAO (como se le), e o
+  // jogador responde a palavra em russo. E o exercicio de leitura ao
+  // contrario: som -> grafia.
+  if (state.pronunciationModeEnabled && state.pronunciationInvertedEnabled) {
+    questionEl.textContent = syllables.romanizar(state.currentSyllable.question);
+    return;
+  }
+
   // Modo reverso: o ESTIMULO passa a ser o answer do card.
   const prompt = state.reverseModeEnabled
     ? state.currentSyllable.answer
@@ -215,6 +230,15 @@ function _setSyllableText(questionEl) {
   } else {
     questionEl.textContent = prompt;
   }
+}
+
+// Modo pronuncia "por pronuncia": o texto do card nao aparece na tela.
+function _isPronunciationAudioOnly() {
+  return (
+    state.pronunciationModeEnabled &&
+    state.pronunciationInvertedEnabled &&
+    state.pronunciationAudioOnlyEnabled
+  );
 }
 
 // Monta a palavra como spans: a silaba sorteada ganha a classe que a deixa
@@ -241,11 +265,16 @@ function _renderSyllableHighlight(questionEl) {
 // Alvo = o que o jogador deve digitar. Sem reverse: o answer (traducao).
 // Com reverse: o question (o termo no idioma estudado).
 // Modo silaba: a romanizacao da silaba destacada.
+// Modo pronuncia: o QUESTION (a palavra em russo) - o enunciado pode ser a
+// romanizacao ou apenas o audio, mas a resposta e sempre a grafia russa.
 function _getTargetText() {
   if (state.syllableModeEnabled) {
     const partes = state.syllableParts;
     const i = state.syllableHighlightIndex;
     return i >= 0 && i < partes.length ? syllables.romanizar(partes[i]) : "";
+  }
+  if (state.pronunciationModeEnabled) {
+    return state.currentSyllable.question;
   }
   return state.reverseModeEnabled
     ? state.currentSyllable.question
@@ -267,6 +296,18 @@ function _isTargetMatch(typed) {
 
   if (typed === target) return true;
   return state.reverseModeEnabled && typed === state.currentSyllable.answer;
+}
+
+// Comparacao do modo pronuncia: o jogador digita a palavra em russo.
+// Compara sem caixa e sem espacos nas pontas, porque o russo e digitado com
+// layout proprio e um espaco acidental nao e erro de leitura.
+export function normalizarRusso(texto) {
+  return String(texto).trim().toLowerCase();
+}
+
+function _isRussianMatch(typed) {
+  if (!state.currentSyllable) return false;
+  return normalizarRusso(typed) === normalizarRusso(state.currentSyllable.question);
 }
 
 // O texto digitado contem a romanizacao da silaba?
@@ -636,7 +677,18 @@ export function displaySyllable() {
       state.utterance.onend = null;
       state.utterance.onerror = null;
     }
-    setTimeout(speech.startRecognition, 200);
+    if (state.pronunciationInvertedEnabled) {
+      // A resposta passa a ser digitada: o microfone nao e mais o canal, entao
+      // o reconhecimento nao inicia. No modo "por pronuncia" o app FALA a
+      // palavra (o estimulo e sonoro, nao visual).
+      speech.stopRecognition();
+      if (state.pronunciationAudioOnlyEnabled) {
+        state.isSpeechUnlocked = true;
+        setTimeout(() => speech.speakCurrentSyllable(true), 200);
+      }
+    } else {
+      setTimeout(speech.startRecognition, 200);
+    }
   } else {
     if (state.autoplayEnabled) {
       // Modo reverso: o estimulo e o answer do card, entao tocar o audio do
@@ -766,7 +818,11 @@ export function startGame() {
 }
 
 export function handleKeyInput(key) {
-  if (state.pronunciationModeEnabled) return;
+  // Modo pronuncia SEM inverter: o estimulo e a propria palavra em russo, e a
+  // resposta tambem e ela - digitar seria copiar. Nesse caso o microfone
+  // continua sendo o canal (ver speech.js). So a versao invertida (romanizacao
+  // ou audio como estimulo) abre a digitacao.
+  if (state.pronunciationModeEnabled && !state.pronunciationInvertedEnabled) return;
   if (!state.firstKeyTime) state.firstKeyTime = Date.now();
   state.userTyped += key;
   if (state.translationElement) {
@@ -777,7 +833,7 @@ export function handleKeyInput(key) {
 }
 
 export function handleBackspace() {
-  if (state.pronunciationModeEnabled) return;
+  if (state.pronunciationModeEnabled && !state.pronunciationInvertedEnabled) return;
   state.userTyped = state.userTyped.slice(0, -1);
   if (state.translationElement) {
     state.translationElement.textContent = state.userTyped;
@@ -1089,7 +1145,12 @@ export function handleFreeModeEnter() {
     return;
   }
 
-  if (_isTargetMatch(state.userTyped)) {
+  // Modo pronuncia invertido: a resposta e a palavra em russo.
+  const acertou = state.pronunciationModeEnabled
+    ? _isRussianMatch(state.userTyped)
+    : _isTargetMatch(state.userTyped);
+
+  if (acertou) {
     _handleFreeModeCorrect();
   } else {
     _handleFreeModeIncorrect();

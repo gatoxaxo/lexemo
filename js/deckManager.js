@@ -59,6 +59,8 @@ export function applyDeckSettingsToGame(settings, onCompleteCallback) {
   state.restartOnWrongEnabled = settings.restartOnWrongEnabled ?? false;
   state.evaluativeModeEnabled = settings.evaluativeModeEnabled ?? false;
   state.pronunciationModeEnabled = settings.pronunciationModeEnabled ?? false;
+  state.pronunciationInvertedEnabled = settings.pronunciationInvertedEnabled ?? false;
+  state.pronunciationAudioOnlyEnabled = settings.pronunciationAudioOnlyEnabled ?? false;
   state.hearingModeEnabled = settings.hearingModeEnabled ?? false;
   state.reverseModeEnabled = settings.reverseModeEnabled ?? false;
   state.syllableModeEnabled = settings.syllableModeEnabled ?? false;
@@ -173,6 +175,8 @@ export function getDefaultSettings() {
     evaluativeModeEnabled: false,
     evaluativeModeEnabled: false,
     pronunciationModeEnabled: false,
+    pronunciationInvertedEnabled: false,
+    pronunciationAudioOnlyEnabled: false,
     hearingModeEnabled: false,
     reverseModeEnabled: false,
     syllableModeEnabled: false,
@@ -204,12 +208,17 @@ export function applySettingsToModalUI(settings) {
   const voicesLoaded = dom.voiceSelect.options.length > 1;
   let pMode = s.pronunciationModeEnabled;
 
-  if (!voicesLoaded) {
+  // Sem voz sintetizada o modo so pode rodar na variante em que o estimulo e
+  // VISUAL (romanizacao). A variante "por pronuncia" depende do audio, entao
+  // nesse caso o modo continua bloqueado.
+  if (!voicesLoaded && s.pronunciationAudioOnlyEnabled) {
     pMode = false;
   }
 
   dom.modeSrsToggle.checked = s.evaluativeModeEnabled;
   dom.modePronunciationToggle.checked = pMode;
+  dom.pronunciationInvertedToggle.checked = s.pronunciationInvertedEnabled || false;
+  dom.pronunciationAudioOnlyToggle.checked = s.pronunciationAudioOnlyEnabled || false;
   dom.modeTimerToggle.checked = s.timerModeEnabled;
   dom.modeTranscriptionToggle.checked = s.transcriptionModeEnabled;
   dom.transcriptionTextInput.value = s.transcriptionText || "";
@@ -229,10 +238,13 @@ export function applySettingsToModalUI(settings) {
     }
 
     const isVoiceSelected = dom.voiceSelect.value !== "none";
-    dom.modePronunciationToggle.disabled = !isVoiceSelected;
+    // Ver _pronunciationRequiresVoice em main.js: so a variante "por
+    // pronuncia" (estimulo sonoro) exige voz.
+    dom.modePronunciationToggle.disabled =
+      dom.pronunciationAudioOnlyToggle.checked && !isVoiceSelected;
 
     let pModeDelayed = s.pronunciationModeEnabled;
-    if (!isVoiceSelected) {
+    if (dom.pronunciationAudioOnlyToggle.checked && !isVoiceSelected) {
       pModeDelayed = false;
     }
 
@@ -267,6 +279,8 @@ function readSettingsFromUI() {
     restartOnWrongEnabled: dom.restartOnWrongToggle.checked,
     evaluativeModeEnabled: dom.modeSrsToggle.checked,
     pronunciationModeEnabled: dom.modePronunciationToggle.checked,
+    pronunciationInvertedEnabled: dom.pronunciationInvertedToggle.checked,
+    pronunciationAudioOnlyEnabled: dom.pronunciationAudioOnlyToggle.checked,
     hearingModeEnabled: dom.hearingModeToggle.checked,
     reverseModeEnabled: dom.reverseModeToggle.checked,
     syllableModeEnabled: dom.syllableModeToggle.checked,
