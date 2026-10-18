@@ -482,15 +482,22 @@ function _renderTranscricao() {
   const revelado = dom.transcriptionRevealedText;
   if (revelado) {
     if (state.transcriptionRevealed) {
-      // No erro, mostra o ESTIMULO da palavra que o jogador errou (o que ele
-      // estava lendo/ouvindo), e nao a resposta: o trabalho de produzir a
-      // resposta continua sendo dele.
+      // No erro, revela a RESPOSTA que o jogador deveria ter produzido.
       //
-      // Usa o indice guardado no erro, porque ao recomecar o texto o cursor
-      // volta para 0 e revelar a primeira palavra nao diz nada sobre o erro.
+      // O que "ajuda a corrigir" depende do sentido do exercicio:
+      //  - normal (russo -> romanizacao): mostrar a palavra em RUSSO. O
+      //    trabalho e produzir a leitura, entao entregar a romanizacao
+      //    resolveria o exercicio por ele; rever o cirilico que ele leu errado
+      //    e o que corrige.
+      //  - invertido (romanizacao -> russo): mostrar a palavra em CIRILICO.
+      //    Aqui a resposta E a grafia russa, e ve-la e justamente o objetivo
+      //    (aprender a escrever o que se ouve/le em romaji). Revelar a
+      //    romanizacao de novo nao ensina nada - ela ja estava na tela.
       const iFalha = state.transcriptionFailedIndex;
       const alvo = iFalha >= 0 && tokens[iFalha] ? tokens[iFalha] : tokens[idx];
-      revelado.textContent = alvo ? alvo[_campoEstimuloTranscricao()] : "";
+      revelado.textContent = alvo
+        ? alvo[state.transcriptionInvertedEnabled ? "original" : "romanizado"]
+        : "";
       revelado.style.display = "block";
     } else {
       revelado.textContent = "";
