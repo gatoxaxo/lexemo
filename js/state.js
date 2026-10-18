@@ -57,6 +57,12 @@ export const state = {
   // conforme transcriptionResetScope).
   transcriptionModeEnabled: false,
   transcriptionText: "",
+  // Transcricao invertida: o estimulo passa a ser a ROMANIZACAO da palavra e o
+  // jogador digita a palavra em RUSSO (exercicio som -> grafia).
+  transcriptionInvertedEnabled: false,
+  // Oculta a caixa de CIMA (o texto em russo) mesmo sem inverter. Fica dentro
+  // do modo transcricao e serve para treinar de ouvido/leitura sem a muleta.
+  transcriptionHideSourceEnabled: false,
   // "text" = erro volta ao inicio do texto; "word" = volta a palavra atual.
   transcriptionResetScope: "text",
   // Progresso da rodada: lista de tokens e indice da palavra atual.

@@ -63,6 +63,8 @@ export function applyDeckSettingsToGame(settings, onCompleteCallback) {
   state.reverseModeEnabled = settings.reverseModeEnabled ?? false;
   state.syllableModeEnabled = settings.syllableModeEnabled ?? false;
   state.transcriptionModeEnabled = settings.transcriptionModeEnabled ?? false;
+  state.transcriptionInvertedEnabled = settings.transcriptionInvertedEnabled ?? false;
+  state.transcriptionHideSourceEnabled = settings.transcriptionHideSourceEnabled ?? false;
   state.transcriptionText = settings.transcriptionText ?? "";
   state.transcriptionResetScope = settings.transcriptionResetScope ?? "text";
   state.timerModeEnabled = settings.timerModeEnabled ?? false;
@@ -177,6 +179,8 @@ export function getDefaultSettings() {
     reverseModeEnabled: false,
     syllableModeEnabled: false,
     transcriptionModeEnabled: false,
+    transcriptionInvertedEnabled: false,
+    transcriptionHideSourceEnabled: false,
     transcriptionText: "",
     transcriptionResetScope: "text",
     timerModeEnabled: false,
@@ -214,6 +218,8 @@ export function applySettingsToModalUI(settings) {
   dom.modeTranscriptionToggle.checked = s.transcriptionModeEnabled;
   dom.transcriptionTextInput.value = s.transcriptionText || "";
   dom.transcriptionResetScopeSelect.value = s.transcriptionResetScope || "text";
+  dom.transcriptionInvertedToggle.checked = s.transcriptionInvertedEnabled || false;
+  dom.transcriptionHideSourceToggle.checked = s.transcriptionHideSourceEnabled || false;
   dom.modeFreeToggle.checked =
     !s.evaluativeModeEnabled &&
     !pMode &&
@@ -271,6 +277,8 @@ function readSettingsFromUI() {
     reverseModeEnabled: dom.reverseModeToggle.checked,
     syllableModeEnabled: dom.syllableModeToggle.checked,
     transcriptionModeEnabled: dom.modeTranscriptionToggle.checked,
+    transcriptionInvertedEnabled: dom.transcriptionInvertedToggle.checked,
+    transcriptionHideSourceEnabled: dom.transcriptionHideSourceToggle.checked,
     transcriptionText: dom.transcriptionTextInput.value,
     transcriptionResetScope: dom.transcriptionResetScopeSelect.value,
     timerModeEnabled: dom.modeTimerToggle.checked,

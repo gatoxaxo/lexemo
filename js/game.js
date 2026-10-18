@@ -365,12 +365,28 @@ function _appendSyllableToDom(syllableEl, questionEl, translationEl) {
 
 // --- Modo transcricao ------------------------------------------------------
 // O jogador romaniza um TEXTO colado nas configuracoes do deck. A tela mostra
-// duas caixas: o texto em russo (estimulo) e a romanizacao esperada.
+// duas caixas: o texto em russo (estimulo) e o que o jogador digita.
 // Regras:
 //  - pontuacao/linhas/espacos sao ignorados ao montar os tokens;
 //  - o jogador digita a palavra inteira e ela e comparada no Enter;
 //  - errou: reinicia do inicio do TEXTO ou da PALAVRA, conforme a opcao;
 //  - acertou todas: partida ganha.
+//
+// SENTIDO DO EXERCICIO (state.transcriptionInvertedEnabled):
+//  - normal: estimulo = russo, resposta = ROMANIZACAO ("зима" -> "zima");
+//  - invertido: estimulo = ROMANIZACAO, resposta = RUSSO ("zima" -> "зима").
+// A maquina de digitacao e a MESMA nos dois casos: o que muda e qual campo do
+// token e o estimulo e qual e o alvo.
+
+// Qual campo do token o jogador deve digitar.
+function _campoAlvoTranscricao() {
+  return state.transcriptionInvertedEnabled ? "original" : "romanizado";
+}
+
+// Qual campo do token e o estimulo (o que aparece na caixa de cima).
+function _campoEstimuloTranscricao() {
+  return state.transcriptionInvertedEnabled ? "romanizado" : "original";
+}
 
 function _iniciarTranscricao() {
   const tokens = syllables.tokenizarTranscricao(state.transcriptionText);
@@ -405,28 +421,59 @@ function _renderTranscricao() {
     });
   };
 
-  montar(dom.transcriptionSourceText, "original");
+  // Caixa de cima: o estimulo. Pode ser ocultada por opcao (treinar sem
+  // muleta). Quando oculta, some a CAIXA inteira, nao so o texto - um quadro
+  // vazio no lugar do estimulo nao ajudaria em nada.
+  const esconderEstimulo = state.transcriptionHideSourceEnabled;
+  if (dom.transcriptionSourceBox) {
+    dom.transcriptionSourceBox.style.display = esconderEstimulo ? "none" : "";
+  }
+
+  // Os rotulos dizem QUAL idioma esta em cada caixa. Invertendo o exercicio
+  // eles trocam, senao o jogador le "Russo" numa caixa que agora mostra
+  // romanizacao. Sao derivados do sentido atual, entao nao podem vir do
+  // data-i18n estatico do HTML.
+  //
+  // O rotulo de baixo e atualizado SEMPRE (mesmo com a caixa de cima oculta):
+  // quem oculta o estimulo ainda precisa saber o que deve digitar.
+  if (dom.transcriptionTargetLabel) {
+    dom.transcriptionTargetLabel.textContent = getTranslation(
+      state.transcriptionInvertedEnabled
+        ? "TRANSCRIPTION_LABEL_RUSSIAN"
+        : "TRANSCRIPTION_LABEL_ROMANIZED",
+    );
+  }
+
+  if (!esconderEstimulo) {
+    montar(dom.transcriptionSourceText, _campoEstimuloTranscricao());
+    if (dom.transcriptionSourceLabel) {
+      dom.transcriptionSourceLabel.textContent = getTranslation(
+        state.transcriptionInvertedEnabled
+          ? "TRANSCRIPTION_LABEL_ROMANIZED"
+          : "TRANSCRIPTION_LABEL_RUSSIAN",
+      );
+    }
+  }
 
   // A caixa de baixo e o CAMPO DE DIGITACAO: mostra o que o jogador esta
-  // escrevendo (mesmo estilo de caixa). A romanizacao esperada NAO fica
-  // visivel, senao o exercicio vira copia e mata o objetivo, que e aprender a
-  // ler a palavra. Ela so aparece quando o jogador erra a rodada - nesse
-  // momento a resposta ja e conhecida, entao revelar ajuda a corrigir.
+  // escrevendo (mesmo estilo de caixa). A resposta esperada NAO fica visivel,
+  // senao o exercicio vira copia e mata o objetivo. Ela so aparece quando o
+  // jogador erra a rodada - nesse momento a resposta ja e conhecida, entao
+  // revelar ajuda a corrigir.
   dom.transcriptionTargetText.textContent = state.userTyped || "";
 
   const revelado = dom.transcriptionRevealedText;
   if (revelado) {
     if (state.transcriptionRevealed) {
-      // No erro, mostra a PALAVRA EM RUSSO que o jogador errou - nao a
-      // romanizacao. O objetivo e treinar a leitura, entao a resposta
-      // romanizada deve continuar sendo trabalho dele; o que ajuda e ver de
-      // novo a palavra que ele leu errado (e nao entregar a transliteracao).
+      // No erro, mostra o ESTIMULO da palavra que o jogador errou (o que ele
+      // estava lendo/ouvindo), e nao a resposta: o trabalho de produzir a
+      // resposta continua sendo dele.
       //
       // Usa o indice guardado no erro, porque ao recomecar o texto o cursor
       // volta para 0 e revelar a primeira palavra nao diz nada sobre o erro.
       const iFalha = state.transcriptionFailedIndex;
       const alvo = iFalha >= 0 && tokens[iFalha] ? tokens[iFalha] : tokens[idx];
-      revelado.textContent = alvo ? alvo.original : "";
+      revelado.textContent = alvo ? alvo[_campoEstimuloTranscricao()] : "";
       revelado.style.display = "block";
     } else {
       revelado.textContent = "";
@@ -444,12 +491,12 @@ function _handleTranscricaoEnter() {
   const tokens = state.transcriptionTokens;
   if (tokens.length === 0) return;
 
-  const esperado = tokens[state.transcriptionIndex].romanizado;
+  const esperado = tokens[state.transcriptionIndex][_campoAlvoTranscricao()];
   const digitado = String(state.userTyped).toLowerCase();
 
   // Palavra completa: avanca. Incompleta: conta como erro (o jogador pulou
   // letra ou apertou espaco antes de terminar).
-  if (digitado === esperado.toLowerCase()) {
+  if (digitado === String(esperado).toLowerCase()) {
     _avancarTranscricao();
   } else {
     _errarTranscricao();
@@ -483,7 +530,8 @@ export function handleTranscricaoKey(key) {
   // (o cursor ja voltou para o inicio e o jogador veria a primeira palavra).
   // Ignoramos tudo ate ele digitar a primeira letra CORRETA da palavra atual.
   if (state.transcriptionRevealed) {
-    const esperadoAtual = tokens[state.transcriptionIndex].romanizado.toLowerCase();
+    const esperadoAtual =
+      tokens[state.transcriptionIndex][_campoAlvoTranscricao()].toLowerCase();
     if (!_letraEquivalente(key, esperadoAtual[0])) {
       return true; // consome sem efeito: ainda na esteira do erro
     }
@@ -513,7 +561,7 @@ export function handleTranscricaoKey(key) {
 
   state.transcriptionJustAdvanced = false;
 
-  const esperado = tokens[state.transcriptionIndex].romanizado.toLowerCase();
+  const esperado = tokens[state.transcriptionIndex][_campoAlvoTranscricao()].toLowerCase();
   const pos = state.userTyped.length;
 
   // Ja terminou a palavra (nao deveria chegar aqui): confirma.

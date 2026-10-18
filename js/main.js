@@ -353,6 +353,16 @@ function _initDeckSettingsListeners() {
       updateModeSettingsVisibility();
     }),
   );
+
+  // Opcoes internas do modo transcricao: nao sao modos, so mudam o sentido do
+  // exercicio (inverter) e o que fica visivel na tela (ocultar estimulo).
+  [
+    dom.transcriptionInvertedToggle,
+    dom.transcriptionHideSourceToggle,
+  ].forEach((toggle) => {
+    if (!toggle) return;
+    toggle.addEventListener("click", () => updateModeSettingsVisibility());
+  });
 }
 
 function _handleKeyEnter() {
