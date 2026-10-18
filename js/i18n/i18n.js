@@ -18,6 +18,19 @@ export async function setLanguage(lang) {
   }
 }
 
+// Rotulos escritos pelo JS (nao por data-i18n) precisam de um gancho: o
+// translatePage so percorre o DOM procurando data-i18n, entao um texto montado
+// em codigo - como os rotulos das caixas do modo transcricao, que trocam de
+// idioma conforme o sentido do exercicio - nunca seria atualizado na troca de
+// lingua.
+//
+// O aviso e um EVENTO no document, e nao uma lista de callbacks importada:
+// assim o modulo que quer se redesenhar nao precisa importar nada daqui (o que
+// criava acoplamento e, na pratica, problemas de cache de modulo no navegador).
+export function notifyLanguageChange() {
+  document.dispatchEvent(new CustomEvent("languageChanged"));
+}
+
 export function translatePage() {
   document
     .querySelectorAll(
@@ -42,6 +55,8 @@ export function translatePage() {
         element.setAttribute("aria-label", translations[ariaLabelKey]);
       }
     });
+
+  notifyLanguageChange();
 }
 
 export function getTranslation(key) {

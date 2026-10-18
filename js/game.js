@@ -16,6 +16,15 @@ import {
 } from "./ui.js";
 import { getTranslation } from "./i18n/i18n.js";
 
+// Os rotulos das caixas do modo transcricao sao montados em JS (dependem do
+// sentido do exercicio), entao data-i18n nao os alcanca: sem este aviso eles
+// ficavam no idioma anterior depois de trocar de lingua.
+document.addEventListener("languageChanged", () => {
+  if (state.transcriptionModeEnabled && state.transcriptionTokens?.length) {
+    _renderTranscricao();
+  }
+});
+
 let lastPickedIndex = -1;
 
 function loadGroup(index) {
@@ -453,6 +462,14 @@ function _renderTranscricao() {
           : "TRANSCRIPTION_LABEL_RUSSIAN",
       );
     }
+  } else if (dom.transcriptionSourceLabel) {
+    // Caixa oculta: o rotulo tambem continua coerente, para nao reaparecer
+    // desatualizado se o jogador voltar a mostrar o estimulo.
+    dom.transcriptionSourceLabel.textContent = getTranslation(
+      state.transcriptionInvertedEnabled
+        ? "TRANSCRIPTION_LABEL_ROMANIZED"
+        : "TRANSCRIPTION_LABEL_RUSSIAN",
+    );
   }
 
   // A caixa de baixo e o CAMPO DE DIGITACAO: mostra o que o jogador esta
@@ -648,6 +665,14 @@ export function displaySyllable() {
     const translationEl = _createTranslationElement();
     translationEl.style.display = "none";
     state.translationElement = translationEl;
+
+    // Estimulo oculto: sem nada escrito na tela, o audio E o enunciado. Toca a
+    // palavra atual e deixa o Shift repetir. Sem isto o exercicio ficava sem
+    // estimulo nenhum (nem visual, nem sonoro).
+    if (state.transcriptionHideSourceEnabled) {
+      state.isSpeechUnlocked = true;
+      speech.speakCurrentSyllable(true);
+    }
     return;
   }
 

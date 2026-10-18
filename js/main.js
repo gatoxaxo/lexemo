@@ -177,11 +177,19 @@ function _initTopPanelListeners() {
 }
 
 function _initGlobalSettingsListeners() {
-  dom.generalSettingsSaveBtn.addEventListener("click", () => {
-    saveGlobalSettings();
+  dom.generalSettingsSaveBtn.addEventListener("click", async () => {
+    // saveGlobalSettings e assincrona (carrega o JSON do idioma e traduz a
+    // pagina). Sem o await, displaySyllable rodava ANTES da traducao nova
+    // estar carregada e redesenhava os rotulos dinamicos com o idioma antigo,
+    // deixando-os presos no idioma anterior mesmo com a UI ja traduzida.
+    await saveGlobalSettings();
     dom.generalSettingsModal.style.display = "none";
 
     if (state.currentSyllable) {
+      game.displaySyllable();
+    } else if (state.transcriptionModeEnabled) {
+      // Modo transcricao nao usa card: re-renderiza as caixas para os rotulos
+      // acompanharem o idioma novo.
       game.displaySyllable();
     }
   });
@@ -479,6 +487,12 @@ function _handleKeyDown(e) {
   if (state.transcriptionModeEnabled) {
     if (e.key === "Backspace") {
       game.handleBackspace();
+      return;
+    }
+    // Shift repete o audio da PALAVRA ATUAL do texto. E o unico apoio sonoro
+    // do modo quando o estimulo escrito esta oculto.
+    if (e.key === "Shift") {
+      game.handleVoiceRepeat();
       return;
     }
     // Espaco vai pelo MESMO caminho das letras: a validacao e letra a letra, e

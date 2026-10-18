@@ -503,19 +503,18 @@
       </div>
 
       <!-- Modo transcricao: duas caixas no centro da tela.
-           Em cima o texto em russo; embaixo o que o jogador digita.
-           A romanizacao esperada so aparece dentro da caixa de baixo depois
-           que ele erra (classe transcription-revealed). -->
+           Em cima o estimulo; embaixo o que o jogador digita.
+           Os rotulos NAO usam data-i18n: quem escreve neles e
+           _renderTranscricao, porque o idioma de cada caixa depende do sentido
+           (inverter troca russo <-> romanizacao). Um data-i18n aqui seria
+           sobrescrito na troca de idioma e voltaria a dizer o idioma errado. -->
       <div id="transcriptionBoxes" style="display: none;">
         <div class="transcription-box" id="transcriptionSourceBox">
-          <!-- Rotulos SEM data-i18n: quem escreve neles e _renderTranscricao,
-               porque o idioma de cada caixa depende do sentido do exercicio
-               (invertido troca russo <-> romanizacao). -->
-          <div class="transcription-box-label" data-i18n="TRANSCRIPTION_SOURCE_LABEL"></div>
+          <div class="transcription-box-label"></div>
           <div class="transcription-box-content" id="transcriptionSourceText"></div>
         </div>
         <div class="transcription-box" id="transcriptionTargetBox">
-          <div class="transcription-box-label" data-i18n="TRANSCRIPTION_TARGET_LABEL"></div>
+          <div class="transcription-box-label"></div>
           <div class="transcription-box-content" id="transcriptionTargetText"></div>
           <div class="transcription-revealed" id="transcriptionRevealedText" style="display: none;"></div>
         </div>

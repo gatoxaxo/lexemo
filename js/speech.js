@@ -264,9 +264,16 @@ export function speakCurrentSyllable(force = false) {
     state.speechTimeout = null;
   }
 
+  // No modo transcricao o "card atual" e um TOKEN do texto colado, nao um
+  // currentSyllable. Sem isto, o Shift nao tocava nada nesse modo.
+  const texto =
+    state.transcriptionModeEnabled && state.transcriptionTokens?.length
+      ? state.transcriptionTokens[state.transcriptionIndex]?.original
+      : state.currentSyllable?.question;
+
   const canSpeak =
     state.isSpeechUnlocked &&
-    state.currentSyllable?.question &&
+    !!texto &&
     (force || !state.pronunciationModeEnabled) &&
     state.selectedVoice;
 
@@ -283,14 +290,21 @@ export function speakCurrentSyllable(force = false) {
   // Small delay to let cancel complete (Chrome bug workaround)
   state.speechTimeout = setTimeout(() => {
     state.speechTimeout = null;
-    
+
     // Final check before speaking
-    if (!state.currentSyllable || !state.isSpeechUnlocked) return;
+    if (!state.isSpeechUnlocked) return;
     if (!force && state.pronunciationModeEnabled) return;
 
-    const utterance = new SpeechSynthesisUtterance(state.currentSyllable.question);
+    // Recalcula o texto: o jogador pode ter avancado durante o timeout.
+    const textoAtual =
+      state.transcriptionModeEnabled && state.transcriptionTokens?.length
+        ? state.transcriptionTokens[state.transcriptionIndex]?.original
+        : state.currentSyllable?.question;
+    if (!textoAtual) return;
+
+    const utterance = new SpeechSynthesisUtterance(textoAtual);
     utterance.voice = state.selectedVoice;
-    
+
     speechSynthesis.speak(utterance);
     state.hasSpokenCurrentCard = true;
   }, 250);
