@@ -77,9 +77,6 @@ export const dom = {
   modeFreeToggle: document.getElementById("modeFreeToggle"),
   modeSrsToggle: document.getElementById("modeSrsToggle"),
   modePronunciationToggle: document.getElementById("modePronunciationToggle"),
-  pronunciationModeSettingsDiv: document.getElementById("pronunciationModeSettingsDiv"),
-  pronunciationInvertedToggle: document.getElementById("pronunciationInvertedToggle"),
-  pronunciationAudioOnlyToggle: document.getElementById("pronunciationAudioOnlyToggle"),
   modeTimerToggle: document.getElementById("modeTimerToggle"),
   modeTranscriptionToggle: document.getElementById("modeTranscriptionToggle"),
   transcriptionModeSettingsDiv: document.getElementById("transcriptionModeSettingsDiv"),
@@ -208,25 +205,10 @@ export function updateModeSettingsVisibility() {
   const isTimer = dom.modeTimerToggle.checked;
   const isSrs = dom.modeSrsToggle.checked;
   const isTranscription = dom.modeTranscriptionToggle.checked;
-  const isPronunciation = dom.modePronunciationToggle.checked;
 
   dom.freeModeSettingsDiv.style.display = isFree || isTimer ? "block" : "none";
   dom.srsModeSettingsDiv.style.display = isSrs ? "block" : "none";
   dom.transcriptionModeSettingsDiv.style.display = isTranscription ? "block" : "none";
-
-  // Opcoes do modo pronuncia so aparecem quando ele esta marcado.
-  if (dom.pronunciationModeSettingsDiv) {
-    dom.pronunciationModeSettingsDiv.style.display = isPronunciation ? "block" : "none";
-  }
-  // "Por pronuncia" (ocultar o texto) so faz sentido junto com "Inverter":
-  // e a variante em que nem a romanizacao aparece.
-  if (dom.pronunciationAudioOnlyToggle) {
-    const label = dom.pronunciationAudioOnlyToggle.closest("label");
-    const showAudioOnly =
-      isPronunciation && dom.pronunciationInvertedToggle?.checked;
-    if (label) label.style.display = showAudioOnly ? "flex" : "none";
-    if (!showAudioOnly) dom.pronunciationAudioOnlyToggle.checked = false;
-  }
   
   const gameSpeedGroup = document.getElementById("gameSpeedGroup");
   if (gameSpeedGroup) gameSpeedGroup.style.display = isTimer ? "flex" : "none";
@@ -308,12 +290,7 @@ export function updateShortcutsVisibility() {
   const isPronunciation = state.pronunciationModeEnabled;
 
   // Visibility rules
-  // No modo pronuncia o estimulo SEM inverter e a propria palavra escrita, e o
-  // canal de resposta e a fala: repetir audio nao ajuda (e o botao ficaria
-  // redundante com o Enter). Ja na versao invertida - romanizacao ou audio -
-  // o Shift repete o audio, entao o atalho precisa aparecer.
-  const repeatVisible =
-    !isTimer && (!isPronunciation || state.pronunciationInvertedEnabled);
+  const repeatVisible = !isTimer && !isPronunciation;
   const editVisible = !isTimer;
   const deleteVisible = !isTimer;
   const levelRangeVisible = !isSrs;

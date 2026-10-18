@@ -141,24 +141,14 @@ function _initVoiceListeners() {
     speech.selectVoice();
 
     const isVoiceSelected = dom.voiceSelect.value !== "none";
-    // O modo pronuncia so PRECISA de voz quando o estimulo e sonoro
-    // ("por pronuncia"). Na versao invertida por romanizacao a resposta e
-    // digitada e o audio e apenas um apoio opcional, entao a ausencia de voz
-    // nao deve bloquear o modo.
-    dom.modePronunciationToggle.disabled = _pronunciationRequiresVoice() && !isVoiceSelected;
+    dom.modePronunciationToggle.disabled = !isVoiceSelected;
 
     if (!isVoiceSelected) {
-      dom.pronunciationAudioOnlyToggle.checked = false;
+      dom.modePronunciationToggle.checked = false;
+      dom.modeFreeToggle.checked = !dom.modeSrsToggle.checked;
       updateModeSettingsVisibility();
     }
   });
-}
-
-// O modo pronuncia exige uma voz sintetizada apenas no caso em que o estimulo
-// e o proprio audio. Fora disso (romanizacao visivel) o exercicio funciona com
-// digitacao.
-function _pronunciationRequiresVoice() {
-  return dom.pronunciationAudioOnlyToggle.checked;
 }
 
 function _initTopPanelListeners() {
@@ -363,28 +353,11 @@ function _initDeckSettingsListeners() {
       updateModeSettingsVisibility();
     }),
   );
-
-  // Opcoes internas do modo pronuncia: nao sao modos, so ajustam o enunciado
-  // (mostrar romanizacao / ocultar tudo). Basta recalcular a visibilidade.
-  [
-    dom.pronunciationInvertedToggle,
-    dom.pronunciationAudioOnlyToggle,
-  ].forEach((toggle) => {
-    if (!toggle) return;
-    toggle.addEventListener("click", () => updateModeSettingsVisibility());
-  });
 }
 
 function _handleKeyEnter() {
-  // Modo pronuncia invertido: Enter confirma a palavra digitada em russo.
-  // Sem inverter, Enter continua pedindo a repeticao do audio (comportamento
-  // antigo do modo, quando o canal era a fala).
   if (state.pronunciationModeEnabled) {
-    if (state.pronunciationInvertedEnabled) {
-      game.handleFreeModeEnter();
-    } else {
-      game.handlePronunciationEnter();
-    }
+    game.handlePronunciationEnter();
   } else if (state.transcriptionModeEnabled) {
     // Modo transcricao nao grava nada no deck (nao ha SRS nem card).
     game.handleFreeModeEnter();
@@ -445,9 +418,7 @@ function _handleHoldEnd() {
 
 function _handleKeyPress(e) {
   if (isModalOpen()) return;
-  // Modo pronuncia: so a versao INVERTIDA aceita digitacao (o estimulo deixa
-  // de ser a propria palavra). Sem inverter o microfone continua sendo o canal.
-  if (state.pronunciationModeEnabled && !state.pronunciationInvertedEnabled) return;
+  if (state.pronunciationModeEnabled) return;
 
   // Modo transcricao nao usa card: o alvo vem do texto colado.
   if (state.transcriptionModeEnabled) {
@@ -522,13 +493,11 @@ function _handleKeyDown(e) {
     game.handleBackspace();
   } else if (
     e.key === "Shift" &&
+    !state.pronunciationModeEnabled &&
     !state.timerModeEnabled &&
-    !state.reverseModeEnabled &&
-    (!state.pronunciationModeEnabled || state.pronunciationInvertedEnabled)
+    !state.reverseModeEnabled
   ) {
     // No modo reverso o Shift nao faz nada: o audio so toca ao errar.
-    // No modo pronuncia, Shift so faz sentido quando o estimulo NAO e a
-    // palavra escrita - ou seja, invertido (romanizacao ou audio).
     game.handleVoiceRepeat();
   } else if (e.key === "Enter") {
     _handleKeyEnter();

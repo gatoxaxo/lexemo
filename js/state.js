@@ -46,14 +46,6 @@ export const state = {
   restartOnWrongEnabled: false,
   evaluativeModeEnabled: false,
   pronunciationModeEnabled: false,
-  // Inverter (modo pronuncia): mostra a ROMANIZACAO no lugar do russo e o
-  // jogador responde DIGITANDO a palavra em russo. Sem inverter, o estimulo e
-  // a palavra em russo e a resposta e digitada tambem (o microfone nao e mais
-  // o canal de resposta).
-  pronunciationInvertedEnabled: false,
-  // Ocultar texto (por pronuncia): nada e exibido - o app FALA a palavra e o
-  // jogador digita o russo do que ouviu. Shift repete o audio.
-  pronunciationAudioOnlyEnabled: false,
   hearingModeEnabled: false,
   // Reverse mode: o ANSWER vira o estimulo e o jogador digita o QUESTION.
   // So vale no free mode (SRS fica intacto).
