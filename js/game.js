@@ -456,6 +456,21 @@ function _handleTranscricaoEnter() {
   }
 }
 
+// Letras aceitas como equivalentes na digitacao.
+//
+// z e s sao intercambiaveis: em russo, з soa como /s/ no fim de palavra e
+// antes de consoante surda, e quem aprende romanizacao oscila entre as duas
+// grafias. Cobrar a letra exata puniria uma leitura correta.
+const LETRAS_EQUIVALENTES = { z: ["z", "s"], s: ["z", "s"] };
+
+function _letraEquivalente(digitada, esperada) {
+  const d = String(digitada).toLowerCase();
+  const e = String(esperada).toLowerCase();
+  if (d === e) return true;
+  const lista = LETRAS_EQUIVALENTES[e];
+  return !!lista && lista.indexOf(d) > -1;
+}
+
 // Processa UMA tecla no modo transcricao. Compara com a proxima letra
 // esperada; se bater, aceita; se nao bater, erra na hora.
 // Retorna true se a tecla foi consumida pelo modo.
@@ -469,7 +484,7 @@ export function handleTranscricaoKey(key) {
   // Ignoramos tudo ate ele digitar a primeira letra CORRETA da palavra atual.
   if (state.transcriptionRevealed) {
     const esperadoAtual = tokens[state.transcriptionIndex].romanizado.toLowerCase();
-    if (key !== esperadoAtual[0]) {
+    if (!_letraEquivalente(key, esperadoAtual[0])) {
       return true; // consome sem efeito: ainda na esteira do erro
     }
     // Recomecou de verdade: limpa a revelacao e segue o fluxo normal.
@@ -508,7 +523,7 @@ export function handleTranscricaoKey(key) {
   }
 
   const letraEsperada = esperado[pos];
-  if (key.toLowerCase() !== letraEsperada) {
+  if (!_letraEquivalente(key, letraEsperada)) {
     // Errou esta letra: nao aceita a tecla, dispara o erro.
     _errarTranscricao();
     return true;
